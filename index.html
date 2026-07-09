@@ -3898,19 +3898,10 @@ const QUESTIONS = [
     ]
   },
   {
-    text: 'what could you do without?',
+    text: 'the listener is..?',
     choices: [
-      { label: 'intensity', avoid: ['intense'] },
-      { label: 'sweetness', avoid: ['romantic', 'praise'] },
-      { label: 'silliness', avoid: ['silly'] },
-      { label: 'nothing', avoid: [] }
-    ]
-  },
-  {
-    text: 'which one feels closest?',
-    choices: [
-      { label: 'dominant', require: 'submissive' },
       { label: 'submissive', require: 'dominant' },
+      { label: 'dominant', require: 'submissive' },
       { label: 'switchy', require: 'switch' },
       { label: 'no preference', require: null }
     ]
@@ -4032,46 +4023,51 @@ function renderQuestion({ animate = false } = {}) {
   }, 230);
 }
 
-function baseCandidates({ignoreHistory=false, ignoreWant=false, ignoreAvoid=false} = {}) {
+let lastChoiceWasReplay = false;
+
+function heardIds() {
+  return new Set(history.map(h => h.id));
+}
+
+function baseCandidates({ignoreHistory=false} = {}) {
   let pool = LIBRARY.filter(item => !blocked.has(item.id) && !failedThisSession.has(item.id));
   pool = pool.filter(item => contentMatches(item));
   pool = pool.filter(item => yearMatches(item));
   if (roleRequirement) pool = pool.filter(item => hardRoleMatches(item, roleRequirement));
+  if (avoidFilters.size) pool = pool.filter(item => !avoided(item));
   if (!ignoreHistory) {
-    const played = new Set(history.map(h => h.id));
-    const unplayed = pool.filter(item => !played.has(item.id));
-    if (unplayed.length) pool = unplayed;
-  }
-  if (!ignoreAvoid && avoidFilters.size) {
-    const kept = pool.filter(item => !avoided(item));
-    if (kept.length) pool = kept;
-  }
-  if (!ignoreWant && wantFilters.size) {
-    const matched = pool.filter(item => wantCount(item) > 0);
-    if (matched.length) pool = matched;
+    const played = heardIds();
+    pool = pool.filter(item => !played.has(item.id));
   }
   return pool;
 }
 
 function score(item) {
-  let s = Math.random() * 4;
-  s += Math.log10((item.plays || 1) + 10) * 0.35;
-  s += wantCount(item) * 14;
-  if (avoided(item)) s -= 80;
-  if ((current && item.id === current.id) || (queued && item.id === queued.id)) s -= 999;
-  s += Math.max(0, 160 - (item.position || 160)) / 350;
+  let s = 0;
+  s += wantCount(item) * 100;
+  s += Math.log10((item.plays || 1) + 10) * 2;
+  s += Math.max(0, 200 - (item.position || 200)) / 10;
+  if ((current && item.id === current.id) || (queued && item.id === queued.id)) s -= 999999;
   return s;
 }
 
-function chooseNext({surprise=false} = {}) {
-  let pool = surprise ? baseCandidates({ignoreWant:true}) : baseCandidates();
-  if (!pool.length) pool = baseCandidates({ignoreHistory:true, ignoreWant:surprise});
-  if (!pool.length && wantFilters.size) pool = baseCandidates({ignoreHistory:true, ignoreWant:true});
-  if (!pool.length && avoidFilters.size) pool = baseCandidates({ignoreHistory:true, ignoreWant:true, ignoreAvoid:true});
+function chooseNext() {
+  lastChoiceWasReplay = false;
+  let pool = baseCandidates();
+
+  if (!pool.length) {
+    pool = baseCandidates({ignoreHistory:true});
+    if (pool.length) lastChoiceWasReplay = true;
+  }
+
   if (!pool.length) return null;
   const ranked = pool.map(item => [item, score(item)]).sort((a,b) => b[1] - a[1]);
-  const top = ranked.slice(0, Math.min(7, ranked.length));
-  return top[Math.floor(Math.random() * top.length)][0];
+  return ranked[0][0];
+}
+
+function showNext(showOptions = {}) {
+  const item = chooseNext();
+  return showItem(item, { ...showOptions, replayed: lastChoiceWasReplay });
 }
 
 function formatMeta(item) {
@@ -4080,7 +4076,7 @@ function formatMeta(item) {
   return [date, tags.join(' · ')].filter(Boolean).join(' · ');
 }
 
-async function showItem(item, {autoplay=false, remember=false} = {}) {
+async function showItem(item, {autoplay=false, remember=false, replayed=false} = {}) {
   if (!item) { setStatus('nothing'); return; }
   const token = ++changeToken;
   now.classList.add('changing');
@@ -4103,6 +4099,10 @@ async function showItem(item, {autoplay=false, remember=false} = {}) {
   await sleep(50);
   if (token !== changeToken) return;
   now.classList.remove('changing');
+
+  if (replayed) {
+    setStatus('you’ve heard everything available — replaying something from before');
+  }
 
   if (autoplay) {
     try { await player.play(); }
@@ -4127,7 +4127,7 @@ function openRadio() {
     gate.classList.remove('swapping');
     radio.classList.add('on');
     renderChips();
-    showItem(chooseNext(), {autoplay:false, remember:false});
+    showNext({autoplay:false, remember:false});
     window.setTimeout(() => { questionTransitioning = false; }, 260);
   }, 280);
 }
@@ -4155,7 +4155,7 @@ function renderYearChips() {
       else excludedYears.add(key);
       saveYears();
       renderYearChips();
-      if (!current || player.paused) showItem(chooseNext(), {autoplay:false, remember:false});
+      if (!current || player.paused) showNext({autoplay:false, remember:false});
     });
     wrap.appendChild(btn);
   }
@@ -4177,7 +4177,7 @@ function renderFilterButtons(containerId, mode) {
       if (target.has(filter.id)) target.delete(filter.id);
       else { target.add(filter.id); other.delete(filter.id); }
       renderChips();
-      if (!current || player.paused) showItem(chooseNext(), {autoplay:false, remember:false});
+      if (!current || player.paused) showNext({autoplay:false, remember:false});
     });
     wrap.appendChild(btn);
   }
@@ -4236,28 +4236,36 @@ function blockItem(id) {
   saveBlocked();
   if (current && current.id === id) {
     current = null;
-    showItem(chooseNext(), {autoplay:true, remember:true});
+    showNext({autoplay:true, remember:true});
   } else {
-    showItem(chooseNext(), {autoplay:false, remember:false});
+    showNext({autoplay:false, remember:false});
   }
   renderMemory();
 }
 
 $('#playBtn').addEventListener('click', async () => {
-  const item = queued || chooseNext();
+  let replayed = false;
+  const item = queued || (() => {
+    const picked = chooseNext();
+    replayed = lastChoiceWasReplay;
+    return picked;
+  })();
   if (!item) return setStatus('nothing');
   current = item;
   addHistory(item);
   renderMemory();
+  if (replayed) {
+    setStatus('you’ve heard everything available — replaying something from before');
+  }
   if (player.src && player.src.includes(item.audio_url)) {
     try { await player.play(); } catch (err) { setStatus('tap play'); }
   } else {
-    showItem(item, {autoplay:true, remember:true});
+    showItem(item, {autoplay:true, remember:true, replayed});
   }
 });
-$('#nextBtn').addEventListener('click', () => showItem(chooseNext(), {autoplay:true, remember:true}));
+$('#nextBtn').addEventListener('click', () => showNext({autoplay:true, remember:true}));
 $('#neverBtn').addEventListener('click', () => { const item = activeItem(); if (item) blockItem(item.id); });
-$('#clearBtn').addEventListener('click', () => { wantFilters.clear(); avoidFilters.clear(); renderChips(); showItem(chooseNext(), {autoplay:false, remember:false}); });
+$('#clearBtn').addEventListener('click', () => { wantFilters.clear(); avoidFilters.clear(); renderChips(); showNext({autoplay:false, remember:false}); });
 $('#againBtn').addEventListener('click', () => {
   player.pause();
   current = null;
@@ -4275,7 +4283,7 @@ $('#againBtn').addEventListener('click', () => {
 $('#clearBlockedBtn').addEventListener('click', () => { blocked.clear(); saveBlocked(); renderMemory(); });
 
 player.addEventListener('play', () => { if (queued) current = queued; });
-player.addEventListener('ended', () => showItem(chooseNext(), {autoplay:true, remember:true}));
+player.addEventListener('ended', () => showNext({autoplay:true, remember:true}));
 player.addEventListener('error', () => {
   const item = activeItem();
   if (item) failedThisSession.add(item.id);
