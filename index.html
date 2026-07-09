@@ -6,30 +6,47 @@
   <title>frequencies</title>
   <style>
     :root {
-      --bg: #11100f;
-      --text: #f3eadc;
-      --soft: #cdbda8;
-      --muted: #8e8174;
-      --dim: #5d544d;
-      --line: #2f2925;
-      --line-soft: #211d1a;
-      --gold: #d9a15b;
-      --red: #c9796f;
+      --bg: #040915;
+      --text: #eef3fb;
+      --soft: #dbe4f6;
+      --muted: #93a7cc;
+      --dim: #6f82a9;
+      --line: rgba(136, 160, 210, 0.28);
+      --line-soft: rgba(117, 139, 184, 0.18);
+      --accent: #a5b8e7;
+      --accent-strong: #c8d4f3;
+      --danger: #d7a1b1;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
       min-height: 100vh;
       background:
-        radial-gradient(circle at 50% 14%, rgba(217,161,91,.07), transparent 34rem),
+        radial-gradient(circle at 50% 18%, rgba(169, 188, 233, .11), transparent 0 22rem),
+        linear-gradient(180deg, rgba(10, 21, 42, 0.96), rgba(3, 8, 20, 1)),
+        repeating-linear-gradient(90deg, rgba(86, 109, 157, .035) 0 28px, rgba(86, 109, 157, .015) 28px 56px),
         var(--bg);
       color: var(--text);
       font: 17px/1.45 Georgia, 'Times New Roman', serif;
+      overflow-x: hidden;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 22%, rgba(228,236,255,.07), transparent 0 10%, transparent 28%),
+        radial-gradient(circle at 50% 70%, rgba(130,152,202,.05), transparent 0 14%, transparent 36%);
+      opacity: .75;
     }
     main {
       width: min(680px, calc(100vw - 32px));
       margin: 0 auto;
       padding: clamp(42px, 11vh, 96px) 0 52px;
+      position: relative;
+      z-index: 1;
     }
     button, a { font: inherit; }
     button {
@@ -63,11 +80,13 @@
       letter-spacing: .01em;
       font-weight: 400;
       color: var(--text);
+      text-shadow: 0 0 18px rgba(233, 238, 249, .06);
     }
     .question {
       font-size: clamp(24px, 4vw, 34px);
       color: var(--soft);
       min-height: 1.25em;
+      max-width: 14ch;
     }
     .answers, .chips, .smallrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .disclaimer { color: var(--dim); font-size: 14px; margin-top: -8px; }
@@ -77,7 +96,7 @@
       border-bottom: 1px solid var(--line);
       transition: color .18s ease, border-color .18s ease, transform .18s ease;
     }
-    .answer:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-1px); }
+    .answer:hover { color: var(--accent-strong); border-color: var(--accent-strong); transform: translateY(-1px); }
 
     .radio {
       opacity: 0;
@@ -91,6 +110,12 @@
       transition: opacity .28s ease, transform .28s ease;
     }
     .now.changing { opacity: 0; transform: translateY(5px); }
+    .eyebrow {
+      color: var(--dim);
+      font-size: 13px;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
     .title {
       font-size: clamp(34px, 7vw, 64px);
       line-height: .98;
@@ -103,8 +128,8 @@
     audio {
       width: 100%;
       margin: 16px 0 14px;
-      opacity: .82;
-      filter: sepia(.2) saturate(.68) brightness(.86);
+      opacity: .88;
+      filter: hue-rotate(190deg) saturate(.78) brightness(.9);
     }
     .smallrow { margin-top: 2px; }
     .smallrow button, .smallrow a {
@@ -113,9 +138,9 @@
       padding: 0 0 1px;
       border-bottom: 1px solid var(--line-soft);
     }
-    .smallrow button:hover, .smallrow a:hover { color: var(--gold); border-color: var(--gold); }
-    .smallrow .primary { color: var(--text); border-color: var(--gold); }
-    .smallrow .danger:hover { color: var(--red); border-color: var(--red); }
+    .smallrow button:hover, .smallrow a:hover { color: var(--accent-strong); border-color: var(--accent-strong); }
+    .smallrow .primary { color: var(--text); border-color: var(--accent); }
+    .smallrow .danger:hover { color: var(--danger); border-color: var(--danger); }
     .status { min-height: 20px; margin-top: 10px; color: var(--dim); font-size: 13px; }
 
     .moods { margin-top: 24px; }
@@ -130,13 +155,13 @@
       color: var(--muted);
       border: 1px solid var(--line-soft);
       border-radius: 999px;
-      padding: 4px 9px 5px;
+      padding: 4px 10px 5px;
       font-size: 15px;
       transition: color .18s ease, border-color .18s ease, background .18s ease;
     }
     .chip:hover { color: var(--soft); border-color: var(--muted); }
-    .chip.want.on { color: #17110b; background: var(--gold); border-color: var(--gold); }
-    .chip.avoid.on { color: #f0d1cd; border-color: var(--red); background: rgba(201,121,111,.12); }
+    .chip.want.on { color: #081024; background: var(--accent); border-color: var(--accent); }
+    .chip.avoid.on { color: #f2d8df; border-color: var(--danger); background: rgba(215,161,177,.12); }
     .quiet { color: var(--dim) !important; border-color: transparent !important; }
     details { margin-top: 34px; color: var(--muted); }
     summary { cursor: pointer; color: var(--dim); font-size: 14px; }
@@ -144,7 +169,7 @@
     li { margin: 8px 0; }
     .mini { margin-left: 8px; display: inline-flex; gap: 7px; }
     .mini button { color: var(--dim); border-bottom: 1px solid var(--line-soft); padding: 0; font-size: 13px; }
-    .mini button:hover { color: var(--gold); border-color: var(--gold); }
+    .mini button:hover { color: var(--accent-strong); border-color: var(--accent-strong); }
     .empty { color: var(--dim); }
     @media (max-width: 560px) {
       main { width: calc(100vw - 24px); padding-top: 56px; }
@@ -164,13 +189,14 @@
 
   <section class="radio" id="radio" aria-live="polite">
     <section class="now" id="now">
+      <div class="eyebrow">now playing</div>
       <div class="title" id="nowTitle"></div>
       <div class="meta" id="nowMeta"></div>
       <audio id="player" controls preload="metadata"></audio>
       <div class="smallrow">
         <button class="primary" id="playBtn">play</button>
         <button id="nextBtn">next</button>
-        <button class="danger" id="neverBtn">never</button>
+        <button class="danger" id="neverBtn">never again</button>
         <a id="sourceLink" href="#" target="_blank" rel="noreferrer" hidden>source</a>
       </div>
       <div class="status" id="status"></div>
@@ -205,6 +231,8 @@
 </main>
 <div class="mark">frequencies</div>
 <script>
+
+
 const LIBRARY = [
   {
     "id": "just-a-few-more-minutes-right",
@@ -3487,12 +3515,12 @@ const QUESTIONS = [
     ]
   },
   {
-    text: 'what should stay?',
+    text: 'how intense?',
     choices: [
-      { label: 'praise', want: ['praise'] },
-      { label: 'tension', want: ['teasing', 'intense'] },
-      { label: 'softness', want: ['soft'] },
-      { label: 'casual', want: ['ramble'] }
+      { label: 'soft', want: ['soft', 'sleepy'], avoid: ['intense'] },
+      { label: 'gentle', want: ['soft', 'romantic'] },
+      { label: 'building', want: ['romantic', 'teasing'] },
+      { label: 'intense', want: ['intense', 'teasing'] }
     ]
   },
   {
@@ -3822,6 +3850,7 @@ player.addEventListener('error', () => {
 
 renderQuestion();
 renderMemory();
+
 </script>
 </body>
 </html>
