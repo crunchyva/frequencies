@@ -66,14 +66,26 @@
       opacity: .75;
       user-select: none;
     }
+    @keyframes gateFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .gate {
       min-height: 55vh;
       display: grid;
       align-content: center;
       gap: 22px;
       transition: opacity .42s ease, transform .42s ease;
+      animation: gateFadeIn .85s ease both;
     }
-    .gate.gone { opacity: 0; transform: translateY(-8px); pointer-events: none; position: absolute; }
+    .gate.gone {
+      animation: none !important;
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      position: absolute;
+      visibility: hidden;
+    }
     .hello {
       font-size: clamp(54px, 15vw, 104px);
       line-height: .88;
@@ -81,12 +93,35 @@
       font-weight: 400;
       color: var(--text);
       text-shadow: 0 0 18px rgba(233, 238, 249, .06);
+      max-height: 1.05em;
+      opacity: 1;
+      transform: translateY(0);
+      overflow: hidden;
+      transition: opacity .34s ease, transform .34s ease, max-height .34s ease, margin .34s ease;
+    }
+    .gate.started .hello {
+      opacity: 0;
+      transform: translateY(-8px);
+      max-height: 0;
+      margin-bottom: -22px;
+      pointer-events: none;
     }
     .question {
       font-size: clamp(24px, 4vw, 34px);
       color: var(--soft);
       min-height: 1.25em;
       max-width: 14ch;
+    }
+    .question, .answers, .disclaimer {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .28s ease, transform .28s ease;
+    }
+    .gate.swapping .question,
+    .gate.swapping .answers,
+    .gate.swapping .disclaimer {
+      opacity: 0;
+      transform: translateY(5px);
     }
     .answers, .chips, .smallrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .disclaimer { color: var(--dim); font-size: 14px; margin-top: -8px; }
@@ -198,7 +233,7 @@
       <div class="smallrow">
         <button class="primary" id="playBtn">play</button>
         <button id="nextBtn">next</button>
-        <button class="danger" id="neverBtn">never again</button>
+        <button class="danger" id="neverBtn">skip</button>
         <a id="sourceLink" href="#" target="_blank" rel="noreferrer" hidden>source</a>
       </div>
       <div class="status" id="status"></div>
@@ -210,11 +245,11 @@
         <div class="chips" id="yearChips"></div>
       </div>
       <div class="moodBlock">
-        <div class="moodLabel">next</div>
+        <div class="moodLabel">include</div>
         <div class="chips" id="wantChips"></div>
       </div>
       <div class="moodBlock">
-        <div class="moodLabel">not</div>
+        <div class="moodLabel">exclude</div>
         <div class="chips" id="avoidChips"></div>
       </div>
       <div class="smallrow">
@@ -229,7 +264,7 @@
     </details>
 
     <details>
-      <summary>away <span id="blockedCount"></span></summary>
+      <summary>skipped <span id="blockedCount"></span></summary>
       <ol id="blocked"></ol>
       <div class="smallrow"><button class="danger" id="clearBlockedBtn">clear</button></div>
     </details>
@@ -3872,7 +3907,7 @@ const QUESTIONS = [
     ]
   },
   {
-    text: 'where do you want to be?',
+    text: 'which one feels closest?',
     choices: [
       { label: 'dominant', require: 'submissive' },
       { label: 'submissive', require: 'dominant' },
@@ -3957,7 +3992,10 @@ function addFilters(choice) {
   for (const id of choice.avoid || []) { avoidFilters.add(id); wantFilters.delete(id); }
 }
 
-function renderQuestion() {
+let questionTransitioning = false;
+
+function updateQuestionContent() {
+  gate.classList.toggle('started', questionIndex > 0);
   const q = QUESTIONS[questionIndex];
   $('#question').textContent = q.text;
   const answers = $('#answers');
@@ -3967,16 +4005,31 @@ function renderQuestion() {
     btn.className = 'answer';
     btn.textContent = choice.label;
     btn.addEventListener('click', () => {
+      if (questionTransitioning) return;
+      questionTransitioning = true;
       addFilters(choice);
       if (questionIndex < QUESTIONS.length - 1) {
         questionIndex += 1;
-        renderQuestion();
+        renderQuestion({ animate: true });
       } else {
         openRadio();
       }
+      window.setTimeout(() => { questionTransitioning = false; }, 540);
     });
     answers.appendChild(btn);
   }
+}
+
+function renderQuestion({ animate = false } = {}) {
+  if (!animate) {
+    updateQuestionContent();
+    return;
+  }
+  gate.classList.add('swapping');
+  window.setTimeout(() => {
+    updateQuestionContent();
+    requestAnimationFrame(() => gate.classList.remove('swapping'));
+  }, 230);
 }
 
 function baseCandidates({ignoreHistory=false, ignoreWant=false, ignoreAvoid=false} = {}) {
@@ -4022,11 +4075,9 @@ function chooseNext({surprise=false} = {}) {
 }
 
 function formatMeta(item) {
-  const tags = (item.tags || [])
-    .filter(t => !/^M4|^F4|^A4|^M$|^F$|^A$/i.test(t))
-    .slice(0, 4);
+  const tags = (item.tags && item.tags.length) ? item.tags : [item.audience].filter(Boolean);
   const date = item.date_display || 'date unknown';
-  return [date, item.audience, tags.join(' · ')].filter(Boolean).join(' · ');
+  return [date, tags.join(' · ')].filter(Boolean).join(' · ');
 }
 
 async function showItem(item, {autoplay=false, remember=false} = {}) {
@@ -4069,10 +4120,16 @@ function setStatus(msg='') { statusEl.textContent = msg; }
 function activeItem() { return current || queued; }
 
 function openRadio() {
-  gate.classList.add('gone');
-  radio.classList.add('on');
-  renderChips();
-  showItem(chooseNext(), {autoplay:false, remember:false});
+  questionTransitioning = true;
+  gate.classList.add('swapping');
+  window.setTimeout(() => {
+    gate.classList.add('gone');
+    gate.classList.remove('swapping');
+    radio.classList.add('on');
+    renderChips();
+    showItem(chooseNext(), {autoplay:false, remember:false});
+    window.setTimeout(() => { questionTransitioning = false; }, 260);
+  }, 280);
 }
 
 function renderYearChips() {
@@ -4146,7 +4203,7 @@ function renderMemory() {
     again.textContent = 'play';
     again.onclick = () => item && showItem(item, {autoplay:true, remember:true});
     const ban = document.createElement('button');
-    ban.textContent = 'never';
+    ban.textContent = 'skip';
     ban.onclick = () => blockItem(h.id);
     actions.append(again, ban);
     li.append(span, actions);
@@ -4210,8 +4267,9 @@ $('#againBtn').addEventListener('click', () => {
   roleRequirement = null;
   contentPreference = 'both';
   questionIndex = 0;
+  questionTransitioning = false;
   radio.classList.remove('on');
-  gate.classList.remove('gone');
+  gate.classList.remove('gone', 'started', 'swapping');
   renderQuestion();
 });
 $('#clearBlockedBtn').addEventListener('click', () => { blocked.clear(); saveBlocked(); renderMemory(); });
