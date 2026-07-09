@@ -7,161 +7,203 @@
   <style>
     :root {
       --bg: #11100f;
-      --panel: #191715;
-      --panel2: #211d1a;
-      --text: #eee5d8;
-      --muted: #a99c8d;
-      --dim: #756b61;
-      --line: #3a332d;
-      --accent: #d9a15b;
-      --accent2: #f0c98c;
-      --bad: #d47b72;
+      --text: #f3eadc;
+      --soft: #cdbda8;
+      --muted: #8e8174;
+      --dim: #5d544d;
+      --line: #2f2925;
+      --line-soft: #211d1a;
+      --gold: #d9a15b;
+      --red: #c9796f;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      background: radial-gradient(circle at 50% 0%, #1d1916 0, var(--bg) 420px);
+      background:
+        radial-gradient(circle at 50% 14%, rgba(217,161,91,.07), transparent 34rem),
+        var(--bg);
       color: var(--text);
-      font: 16px/1.5 Georgia, 'Times New Roman', serif;
-      display: flex;
-      justify-content: center;
+      font: 17px/1.45 Georgia, 'Times New Roman', serif;
     }
     main {
-      width: min(720px, calc(100vw - 28px));
-      padding: 34px 0 60px;
+      width: min(680px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: clamp(42px, 11vh, 96px) 0 52px;
     }
-    h1 {
-      font-size: clamp(32px, 7vw, 58px);
-      font-weight: 400;
-      letter-spacing: .03em;
-      margin: 0 0 2px;
-      text-transform: lowercase;
+    button, a { font: inherit; }
+    button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--soft);
+      cursor: pointer;
     }
-    .sub { color: var(--muted); margin-bottom: 34px; }
-    .now {
-      border: 1px solid var(--line);
-      background: color-mix(in srgb, var(--panel) 92%, black);
-      padding: 18px;
-      margin-bottom: 16px;
-    }
-    .eyebrow {
+    .mark {
+      position: fixed;
+      right: 18px;
+      bottom: 14px;
       color: var(--dim);
       font-size: 13px;
       letter-spacing: .08em;
-      text-transform: lowercase;
-      margin-bottom: 6px;
+      opacity: .75;
+      user-select: none;
     }
+    .gate {
+      min-height: 55vh;
+      display: grid;
+      align-content: center;
+      gap: 22px;
+      transition: opacity .42s ease, transform .42s ease;
+    }
+    .gate.gone { opacity: 0; transform: translateY(-8px); pointer-events: none; position: absolute; }
+    .hello {
+      font-size: clamp(54px, 15vw, 104px);
+      line-height: .88;
+      letter-spacing: .01em;
+      font-weight: 400;
+      color: var(--text);
+    }
+    .question {
+      font-size: clamp(24px, 4vw, 34px);
+      color: var(--soft);
+      min-height: 1.25em;
+    }
+    .answers, .chips, .smallrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .disclaimer { color: var(--dim); font-size: 14px; margin-top: -8px; }
+    .answer {
+      padding: 0 0 2px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+      transition: color .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .answer:hover { color: var(--gold); border-color: var(--gold); transform: translateY(-1px); }
+
+    .radio {
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .radio.on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .now {
+      margin: 0 0 34px;
+      transition: opacity .28s ease, transform .28s ease;
+    }
+    .now.changing { opacity: 0; transform: translateY(5px); }
     .title {
-      font-size: clamp(22px, 4.5vw, 34px);
-      line-height: 1.12;
-      margin: 0 0 8px;
+      font-size: clamp(34px, 7vw, 64px);
+      line-height: .98;
+      letter-spacing: -.012em;
+      max-width: 11ch;
       overflow-wrap: anywhere;
+      margin: 0 0 12px;
     }
-    .meta { color: var(--muted); font-size: 14px; }
+    .meta { color: var(--dim); font-size: 14px; min-height: 20px; }
     audio {
       width: 100%;
-      margin-top: 16px;
-      filter: sepia(.15) saturate(.8);
+      margin: 16px 0 14px;
+      opacity: .82;
+      filter: sepia(.2) saturate(.68) brightness(.86);
     }
-    .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
-    button, a.button {
-      appearance: none;
-      border: 1px solid var(--line);
-      background: transparent;
-      color: var(--text);
-      font: inherit;
-      padding: 8px 11px;
-      cursor: pointer;
-      text-decoration: none;
-      border-radius: 999px;
-    }
-    button:hover, a.button:hover { border-color: var(--accent); color: var(--accent2); }
-    button.primary { background: var(--accent); color: #16110c; border-color: var(--accent); }
-    button.primary:hover { color: #000; background: var(--accent2); }
-    button.danger:hover { border-color: var(--bad); color: var(--bad); }
-    button.chip { color: var(--muted); padding: 6px 10px; font-size: 14px; }
-    button.chip.on { color: #17110b; background: var(--accent2); border-color: var(--accent2); }
-    section { margin-top: 24px; }
-    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-    h2 { font-weight: 400; font-size: 19px; margin: 0; }
-    .tiny { color: var(--dim); font-size: 13px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
-    .status {
-      min-height: 24px;
+    .smallrow { margin-top: 2px; }
+    .smallrow button, .smallrow a {
       color: var(--muted);
-      font-size: 14px;
-      margin-top: 10px;
+      text-decoration: none;
+      padding: 0 0 1px;
+      border-bottom: 1px solid var(--line-soft);
     }
-    details { border-top: 1px solid var(--line); padding-top: 12px; }
-    summary { cursor: pointer; color: var(--muted); }
-    ol { padding-left: 22px; color: var(--muted); }
+    .smallrow button:hover, .smallrow a:hover { color: var(--gold); border-color: var(--gold); }
+    .smallrow .primary { color: var(--text); border-color: var(--gold); }
+    .smallrow .danger:hover { color: var(--red); border-color: var(--red); }
+    .status { min-height: 20px; margin-top: 10px; color: var(--dim); font-size: 13px; }
+
+    .moods { margin-top: 24px; }
+    .moodBlock { margin: 19px 0; }
+    .moodLabel {
+      color: var(--dim);
+      font-size: 13px;
+      letter-spacing: .05em;
+      margin-bottom: 8px;
+    }
+    .chip {
+      color: var(--muted);
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      padding: 4px 9px 5px;
+      font-size: 15px;
+      transition: color .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .chip:hover { color: var(--soft); border-color: var(--muted); }
+    .chip.want.on { color: #17110b; background: var(--gold); border-color: var(--gold); }
+    .chip.avoid.on { color: #f0d1cd; border-color: var(--red); background: rgba(201,121,111,.12); }
+    .quiet { color: var(--dim) !important; border-color: transparent !important; }
+    details { margin-top: 34px; color: var(--muted); }
+    summary { cursor: pointer; color: var(--dim); font-size: 14px; }
+    ol { padding-left: 20px; }
     li { margin: 8px 0; }
-    .history-title { color: var(--text); }
-    .mini-actions { display: inline-flex; gap: 6px; margin-left: 8px; }
-    .mini-actions button { font-size: 12px; padding: 2px 7px; }
+    .mini { margin-left: 8px; display: inline-flex; gap: 7px; }
+    .mini button { color: var(--dim); border-bottom: 1px solid var(--line-soft); padding: 0; font-size: 13px; }
+    .mini button:hover { color: var(--gold); border-color: var(--gold); }
     .empty { color: var(--dim); }
-    .source { color: var(--muted); text-decoration-color: var(--line); }
-    .source:hover { color: var(--accent2); }
-    .footer { margin-top: 32px; color: var(--dim); font-size: 13px; }
-    @media (max-width: 540px) {
-      main { width: calc(100vw - 20px); padding-top: 22px; }
-      .now { padding: 14px; }
-      button, a.button { padding: 8px 10px; }
+    @media (max-width: 560px) {
+      main { width: calc(100vw - 24px); padding-top: 56px; }
+      .title { max-width: none; }
+      .mark { display: none; }
     }
   </style>
 </head>
 <body>
 <main>
-  <h1>frequencies</h1>
-  <div class="sub">a small mood radio. pick a feeling, press start, nudge what comes next.</div>
-
-  <div class="now">
-    <div class="eyebrow">now playing</div>
-    <div class="title" id="nowTitle">nothing yet</div>
-    <div class="meta" id="nowMeta">choose a mood or just start.</div>
-    <audio id="player" controls preload="metadata"></audio>
-    <div class="controls">
-      <button class="primary" id="startBtn">start</button>
-      <button id="nextBtn">next</button>
-      <button class="danger" id="blockBtn">don’t play this again</button>
-      <a class="button source" id="sourceLink" href="#" target="_blank" rel="noreferrer" hidden>source</a>
-    </div>
-    <div class="status" id="status"></div>
-  </div>
-
-  <section>
-    <div class="section-head">
-      <h2>shape the next one</h2>
-      <span class="tiny" id="poolCount"></span>
-    </div>
-    <div class="chips" id="chips"></div>
-    <div class="controls">
-      <button id="clearMoodsBtn">clear moods</button>
-      <button id="surpriseBtn">surprise next</button>
-    </div>
+  <section class="gate" id="gate" aria-live="polite">
+    <div class="hello">hi</div>
+    <div class="question" id="question"></div>
+    <div class="answers" id="answers"></div>
+    <div class="disclaimer">no pressure, you can change these at any time</div>
   </section>
 
-  <section>
-    <details open>
-      <summary>session history <span id="historyCount"></span></summary>
+  <section class="radio" id="radio" aria-live="polite">
+    <section class="now" id="now">
+      <div class="title" id="nowTitle"></div>
+      <div class="meta" id="nowMeta"></div>
+      <audio id="player" controls preload="metadata"></audio>
+      <div class="smallrow">
+        <button class="primary" id="playBtn">play</button>
+        <button id="nextBtn">next</button>
+        <button class="danger" id="neverBtn">never</button>
+        <a id="sourceLink" href="#" target="_blank" rel="noreferrer" hidden>source</a>
+      </div>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section class="moods" aria-label="mood controls">
+      <div class="moodBlock">
+        <div class="moodLabel">next</div>
+        <div class="chips" id="wantChips"></div>
+      </div>
+      <div class="moodBlock">
+        <div class="moodLabel">not</div>
+        <div class="chips" id="avoidChips"></div>
+      </div>
+      <div class="smallrow">
+        <button class="quiet" id="clearBtn">clear</button>
+        <button class="quiet" id="againBtn">hello again</button>
+      </div>
+    </section>
+
+    <details>
+      <summary>heard <span id="historyCount"></span></summary>
       <ol id="history"></ol>
     </details>
-  </section>
 
-  <section>
     <details>
-      <summary>blocked audios <span id="blockedCount"></span></summary>
-      <div class="status">These are saved in this browser only.</div>
+      <summary>away <span id="blockedCount"></span></summary>
       <ol id="blocked"></ol>
-      <div class="controls"><button class="danger" id="clearBlockedBtn">clear blocked list</button></div>
+      <div class="smallrow"><button class="danger" id="clearBlockedBtn">clear</button></div>
     </details>
   </section>
-
-  <div class="footer">
-    Put this file beside your <code>audio/</code> folder in the GitHub repo. Browsers need one click before audio can start; after that, this will advance automatically.
-  </div>
 </main>
+<div class="mark">frequencies</div>
 <script>
 const LIBRARY = [
   {
@@ -960,7 +1002,7 @@ const LIBRARY = [
   },
   {
     "id": "shutting-up-the-dorky-virgin-himbo-with-kisses-and-creampies-a-few",
-    "title": "Shutting up the dorky virgin himbo with kisses and creampies a few",
+    "title": "Shutting up the dorky virgin himbo with kisses and creampies",
     "tags": [
       "M4F",
       "Virgin",
@@ -1379,7 +1421,7 @@ const LIBRARY = [
   },
   {
     "id": "wait-you-want-me-inside-of-you-ish",
-    "title": "Wait, you want me inside of you? ish",
+    "title": "Wait, you want me inside of you?",
     "tags": [
       "M4F",
       "Mischievous listener",
@@ -1831,7 +1873,7 @@ const LIBRARY = [
   },
   {
     "id": "there-s-no-way-you-can-make-me-cum-from-just-grinding-lots-of",
-    "title": "There's no way you can make me cum from just grinding lots of",
+    "title": "There's no way you can make me cum from just grinding",
     "tags": [
       "M4F",
       "Friends to lovers",
@@ -2505,7 +2547,7 @@ const LIBRARY = [
   },
   {
     "id": "just-a-little-grinding-might-help-us-fall-back-asleep-lots-of",
-    "title": "Just a little grinding might help us fall back asleep lots of",
+    "title": "Just a little grinding might help us fall back asleep",
     "tags": [
       "M4F",
       "BFE",
@@ -3318,18 +3360,29 @@ const FILTERS = [
     ]
   },
   {
-    "id": "subby",
-    "label": "subby/switchy",
+    "id": "submissive",
+    "label": "submissive",
     "terms": [
       "msub",
-      "switch",
-      "switchy",
       "whimper",
       "whimpers",
       "pleading",
       "begging",
       "nervous",
       "shy"
+    ]
+  },
+  {
+    "id": "switch",
+    "label": "switchy",
+    "terms": [
+      "switch",
+      "switchy",
+      "mdom to msub",
+      "msub to mdom",
+      "dom to sub",
+      "sub to dom",
+      "control swap"
     ]
   },
   {
@@ -3415,184 +3468,300 @@ const FILTERS = [
   }
 ];
 
+const QUESTIONS = [
+  {
+    text: 'what kind of audio are you looking for?',
+    choices: [
+      { label: 'sfw', content: 'sfw' },
+      { label: 'nsfw', content: 'nsfw' },
+      { label: 'either', content: 'both' }
+    ]
+  },
+  {
+    text: 'how are you feeling?',
+    choices: [
+      { label: 'tender', want: ['soft', 'romantic'] },
+      { label: 'sleepy', want: ['sleepy', 'soft'] },
+      { label: 'needy', want: ['teasing', 'intense'] },
+      { label: 'silly', want: ['story', 'silly'] }
+    ]
+  },
+  {
+    text: 'what should stay?',
+    choices: [
+      { label: 'praise', want: ['praise'] },
+      { label: 'tension', want: ['teasing', 'intense'] },
+      { label: 'softness', want: ['soft'] },
+      { label: 'casual', want: ['ramble'] }
+    ]
+  },
+  {
+    text: 'what could you do without?',
+    choices: [
+      { label: 'intensity', avoid: ['intense'] },
+      { label: 'sweetness', avoid: ['romantic', 'praise'] },
+      { label: 'silliness', avoid: ['silly'] },
+      { label: 'nothing', avoid: [] }
+    ]
+  },
+  {
+    text: 'where do you want to be?',
+    choices: [
+      { label: 'dominant', require: 'submissive' },
+      { label: 'submissive', require: 'dominant' },
+      { label: 'switchy', require: 'switch' },
+      { label: 'no preference', require: null }
+    ]
+  }
+];
+
 const $ = (sel) => document.querySelector(sel);
 const player = $('#player');
+const gate = $('#gate');
+const radio = $('#radio');
+const now = $('#now');
 const nowTitle = $('#nowTitle');
 const nowMeta = $('#nowMeta');
 const statusEl = $('#status');
-const poolCount = $('#poolCount');
+const sourceLink = $('#sourceLink');
 const historyEl = $('#history');
 const blockedEl = $('#blocked');
-const sourceLink = $('#sourceLink');
 
-const STORAGE_KEY = 'frequencies.blocked.v1';
-let activeFilters = new Set();
+const BLOCKED_KEY = 'frequencies.blocked.v1';
+let wantFilters = new Set();
+let avoidFilters = new Set();
 let history = [];
+let queued = null;
 let current = null;
 let failedThisSession = new Set();
-let blocked = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+let blocked = new Set(JSON.parse(localStorage.getItem(BLOCKED_KEY) || '[]'));
+let questionIndex = 0;
+let changeToken = 0;
+let roleRequirement = null;
+let contentPreference = 'both';
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-function saveBlocked() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...blocked]));
+function cleanDisplayTitle(title) {
+  return String(title || '')
+    .replace(/\s+(lots of|a few|ish)\s*$/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
+for (const item of LIBRARY) item.title = cleanDisplayTitle(item.title);
 
 function normalize(s) { return String(s || '').toLowerCase(); }
 function haystack(item) { return normalize([item.title, item.audience, ...(item.tags || [])].join(' ')); }
-function itemMatchesFilter(item, filter) {
+function filterMatches(item, filter) {
   const h = haystack(item);
   return filter.terms.some(term => h.includes(normalize(term)));
 }
-function activeFilterObjects() { return FILTERS.filter(f => activeFilters.has(f.id)); }
-function matchCount(item) { return activeFilterObjects().filter(f => itemMatchesFilter(item, f)).length; }
+function hardRoleMatches(item, role) {
+  if (!role) return true;
+  const tagText = normalize((item.tags || []).join(' | '));
+  if (role === 'dominant') return /\bmdom\b/.test(tagText);
+  if (role === 'submissive') return /\bmsub\b/.test(tagText);
+  if (role === 'switch') return /\bswitchy?\b|\bmdom\s+to\s+msub\b|\bmsub\s+to\s+mdom\b|control swap/.test(tagText);
+  return true;
+}
+function isSfw(item) {
+  const tagText = normalize([item.title, ...(item.tags || [])].join(' | '));
+  return /(^|\b)sfw($|\b)/i.test(tagText);
+}
+function contentMatches(item) {
+  if (contentPreference === 'sfw') return isSfw(item);
+  if (contentPreference === 'nsfw') return !isSfw(item);
+  return true;
+}
+function wantObjects() { return FILTERS.filter(f => wantFilters.has(f.id)); }
+function avoidObjects() { return FILTERS.filter(f => avoidFilters.has(f.id)); }
+function wantCount(item) { return wantObjects().filter(f => filterMatches(item, f)).length; }
+function avoided(item) { return avoidObjects().some(f => filterMatches(item, f)); }
+function saveBlocked() { localStorage.setItem(BLOCKED_KEY, JSON.stringify([...blocked])); }
 
-function baseCandidates({ignoreHistory=false, ignoreFilters=false} = {}) {
+function addFilters(choice) {
+  if (Object.prototype.hasOwnProperty.call(choice, 'content')) contentPreference = choice.content;
+  if (Object.prototype.hasOwnProperty.call(choice, 'require')) roleRequirement = choice.require;
+  for (const id of choice.want || []) { wantFilters.add(id); avoidFilters.delete(id); }
+  for (const id of choice.avoid || []) { avoidFilters.add(id); wantFilters.delete(id); }
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[questionIndex];
+  $('#question').textContent = q.text;
+  const answers = $('#answers');
+  answers.innerHTML = '';
+  for (const choice of q.choices) {
+    const btn = document.createElement('button');
+    btn.className = 'answer';
+    btn.textContent = choice.label;
+    btn.addEventListener('click', () => {
+      addFilters(choice);
+      if (questionIndex < QUESTIONS.length - 1) {
+        questionIndex += 1;
+        renderQuestion();
+      } else {
+        openRadio();
+      }
+    });
+    answers.appendChild(btn);
+  }
+}
+
+function baseCandidates({ignoreHistory=false, ignoreWant=false, ignoreAvoid=false} = {}) {
   let pool = LIBRARY.filter(item => !blocked.has(item.id) && !failedThisSession.has(item.id));
+  pool = pool.filter(item => contentMatches(item));
+  if (roleRequirement) pool = pool.filter(item => hardRoleMatches(item, roleRequirement));
   if (!ignoreHistory) {
     const played = new Set(history.map(h => h.id));
     const unplayed = pool.filter(item => !played.has(item.id));
     if (unplayed.length) pool = unplayed;
   }
-  if (!ignoreFilters && activeFilters.size) {
-    const filtered = pool.filter(item => matchCount(item) > 0);
-    if (filtered.length) pool = filtered;
+  if (!ignoreAvoid && avoidFilters.size) {
+    const kept = pool.filter(item => !avoided(item));
+    if (kept.length) pool = kept;
+  }
+  if (!ignoreWant && wantFilters.size) {
+    const matched = pool.filter(item => wantCount(item) > 0);
+    if (matched.length) pool = matched;
   }
   return pool;
 }
 
 function score(item) {
   let s = Math.random() * 4;
-  s += Math.log10((item.plays || 1) + 10) * 0.45;
-  s += matchCount(item) * 14;
-  if (current && item.id === current.id) s -= 999;
-  // Very slight preference for newer/profile-top entries, without forcing them.
-  s += Math.max(0, 160 - (item.position || 160)) / 300;
+  s += Math.log10((item.plays || 1) + 10) * 0.35;
+  s += wantCount(item) * 14;
+  if (avoided(item)) s -= 80;
+  if ((current && item.id === current.id) || (queued && item.id === queued.id)) s -= 999;
+  s += Math.max(0, 160 - (item.position || 160)) / 350;
   return s;
 }
 
 function chooseNext({surprise=false} = {}) {
-  let pool = surprise ? baseCandidates({ignoreFilters:true}) : baseCandidates();
-  let relaxed = false;
-
-  if (!pool.length && activeFilters.size && !surprise) {
-    pool = baseCandidates({ignoreFilters:true});
-    relaxed = true;
-  }
-  if (!pool.length) {
-    pool = baseCandidates({ignoreHistory:true, ignoreFilters:surprise});
-  }
-  if (!pool.length && activeFilters.size && !surprise) {
-    pool = baseCandidates({ignoreHistory:true, ignoreFilters:true});
-    relaxed = true;
-  }
+  let pool = surprise ? baseCandidates({ignoreWant:true}) : baseCandidates();
+  if (!pool.length) pool = baseCandidates({ignoreHistory:true, ignoreWant:surprise});
+  if (!pool.length && wantFilters.size) pool = baseCandidates({ignoreHistory:true, ignoreWant:true});
+  if (!pool.length && avoidFilters.size) pool = baseCandidates({ignoreHistory:true, ignoreWant:true, ignoreAvoid:true});
   if (!pool.length) return null;
-
   const ranked = pool.map(item => [item, score(item)]).sort((a,b) => b[1] - a[1]);
-  const top = ranked.slice(0, Math.min(8, ranked.length));
-  const picked = top[Math.floor(Math.random() * top.length)][0];
-  if (relaxed) setStatus('nothing matched those moods, so i loosened the pool.');
-  return picked;
+  const top = ranked.slice(0, Math.min(7, ranked.length));
+  return top[Math.floor(Math.random() * top.length)][0];
 }
 
-function renderChips() {
-  const wrap = $('#chips');
-  wrap.innerHTML = '';
-  for (const filter of FILTERS) {
-    const btn = document.createElement('button');
-    btn.className = 'chip' + (activeFilters.has(filter.id) ? ' on' : '');
-    btn.textContent = filter.label;
-    btn.title = filter.terms.join(', ');
-    btn.addEventListener('click', () => {
-      if (activeFilters.has(filter.id)) activeFilters.delete(filter.id);
-      else activeFilters.add(filter.id);
-      render();
-      setStatus(activeFilters.size ? 'the next pick will lean this way.' : 'back to the full pool.');
-    });
-    wrap.appendChild(btn);
-  }
-}
-
-function setStatus(msg='') { statusEl.textContent = msg; }
 function formatMeta(item) {
-  const tags = (item.tags || []).filter(t => !/^M4|^F4|^A4|^M$|^F$|^A$/i.test(t)).slice(0, 6);
-  const plays = item.plays ? item.plays.toLocaleString() + ' plays' : '';
-  return [item.audience, plays, tags.join(' · ')].filter(Boolean).join(' · ');
+  const tags = (item.tags || [])
+    .filter(t => !/^M4|^F4|^A4|^M$|^F$|^A$/i.test(t))
+    .slice(0, 4);
+  return [item.audience, tags.join(' · ')].filter(Boolean).join(' · ');
 }
 
-async function playItem(item, reason='') {
-  if (!item) {
-    setStatus('no playable audios left. try clearing moods or blocked items.');
-    return;
-  }
-  current = item;
-  player.src = item.audio_url;
+async function showItem(item, {autoplay=false, remember=false} = {}) {
+  if (!item) { setStatus('nothing'); return; }
+  const token = ++changeToken;
+  now.classList.add('changing');
+  setStatus('');
+  await sleep(230);
+  if (token !== changeToken) return;
+
+  queued = item;
+  if (autoplay) current = item;
   nowTitle.textContent = item.title;
   nowMeta.textContent = formatMeta(item);
   sourceLink.href = item.source_url || '#';
   sourceLink.hidden = !item.source_url;
+  player.src = item.audio_url;
+  $('#playBtn').textContent = autoplay ? 'play' : 'play';
+
+  if (remember) addHistory(item);
+  renderMemory();
+
+  await sleep(50);
+  if (token !== changeToken) return;
+  now.classList.remove('changing');
+
+  if (autoplay) {
+    try { await player.play(); }
+    catch (err) { setStatus('tap play'); }
+  }
+}
+
+function addHistory(item) {
   if (!history.length || history[history.length - 1].id !== item.id) {
     history.push({ id: item.id, title: item.title, source_url: item.source_url, at: new Date().toISOString() });
   }
-  render();
-  setStatus(reason ? reason : '');
-  try {
-    await player.play();
-  } catch (err) {
-    setStatus('press play on the audio bar if the browser blocked autoplay.');
+}
+
+function setStatus(msg='') { statusEl.textContent = msg; }
+function activeItem() { return current || queued; }
+
+function openRadio() {
+  gate.classList.add('gone');
+  radio.classList.add('on');
+  renderChips();
+  showItem(chooseNext(), {autoplay:false, remember:false});
+}
+
+function renderFilterButtons(containerId, mode) {
+  const wrap = $(containerId);
+  wrap.innerHTML = '';
+  const chipFilters = FILTERS.filter(f => !['dominant', 'submissive', 'switch'].includes(f.id));
+  for (const filter of chipFilters) {
+    const isOn = mode === 'want' ? wantFilters.has(filter.id) : avoidFilters.has(filter.id);
+    const btn = document.createElement('button');
+    btn.className = `chip ${mode}${isOn ? ' on' : ''}`;
+    btn.textContent = filter.label;
+    btn.title = filter.terms.join(', ');
+    btn.addEventListener('click', () => {
+      const target = mode === 'want' ? wantFilters : avoidFilters;
+      const other = mode === 'want' ? avoidFilters : wantFilters;
+      if (target.has(filter.id)) target.delete(filter.id);
+      else { target.add(filter.id); other.delete(filter.id); }
+      renderChips();
+      if (!current || player.paused) showItem(chooseNext(), {autoplay:false, remember:false});
+    });
+    wrap.appendChild(btn);
   }
 }
-
-function playNext(reason='') {
-  const next = chooseNext();
-  playItem(next, reason);
+function renderChips() {
+  renderFilterButtons('#wantChips', 'want');
+  renderFilterButtons('#avoidChips', 'avoid');
 }
 
-function renderHistory() {
+function renderMemory() {
   $('#historyCount').textContent = history.length ? `(${history.length})` : '';
   historyEl.innerHTML = '';
-  if (!history.length) {
-    historyEl.innerHTML = '<li class="empty">nothing yet</li>';
-    return;
-  }
+  if (!history.length) { historyEl.innerHTML = '<li class="empty">empty</li>'; }
   [...history].reverse().forEach(h => {
     const item = LIBRARY.find(x => x.id === h.id);
     const li = document.createElement('li');
     const span = document.createElement('span');
-    span.className = 'history-title';
     span.textContent = h.title;
-    li.appendChild(span);
     const actions = document.createElement('span');
-    actions.className = 'mini-actions';
+    actions.className = 'mini';
     const again = document.createElement('button');
     again.textContent = 'play';
-    again.onclick = () => item && playItem(item, 'playing from history.');
+    again.onclick = () => item && showItem(item, {autoplay:true, remember:true});
     const ban = document.createElement('button');
-    ban.textContent = 'block';
-    ban.className = 'danger';
-    ban.onclick = () => { blockItem(h.id); };
+    ban.textContent = 'never';
+    ban.onclick = () => blockItem(h.id);
     actions.append(again, ban);
-    li.appendChild(actions);
+    li.append(span, actions);
     historyEl.appendChild(li);
   });
-}
 
-function renderBlocked() {
   $('#blockedCount').textContent = blocked.size ? `(${blocked.size})` : '';
   blockedEl.innerHTML = '';
-  if (!blocked.size) {
-    blockedEl.innerHTML = '<li class="empty">nothing blocked</li>';
-    return;
-  }
+  if (!blocked.size) { blockedEl.innerHTML = '<li class="empty">empty</li>'; return; }
   [...blocked].forEach(id => {
     const item = LIBRARY.find(x => x.id === id);
     const li = document.createElement('li');
     const span = document.createElement('span');
-    span.className = 'history-title';
     span.textContent = item ? item.title : id;
     const actions = document.createElement('span');
-    actions.className = 'mini-actions';
+    actions.className = 'mini';
     const undo = document.createElement('button');
-    undo.textContent = 'unblock';
-    undo.onclick = () => { blocked.delete(id); saveBlocked(); render(); };
+    undo.textContent = 'undo';
+    undo.onclick = () => { blocked.delete(id); saveBlocked(); renderMemory(); };
     actions.appendChild(undo);
     li.append(span, actions);
     blockedEl.appendChild(li);
@@ -3604,50 +3773,55 @@ function blockItem(id) {
   if (!item) return;
   blocked.add(id);
   saveBlocked();
-  render();
   if (current && current.id === id) {
-    playNext('blocked that one. moving on.');
+    current = null;
+    showItem(chooseNext(), {autoplay:true, remember:true});
   } else {
-    setStatus('blocked: ' + item.title);
+    showItem(chooseNext(), {autoplay:false, remember:false});
   }
+  renderMemory();
 }
 
-function renderPoolCount() {
-  const pool = baseCandidates();
-  const label = activeFilters.size ? `${pool.length} matching` : `${pool.length} available`;
-  poolCount.textContent = label;
-}
-
-function render() {
-  renderChips();
-  renderHistory();
-  renderBlocked();
-  renderPoolCount();
-}
-
-$('#startBtn').addEventListener('click', () => playNext(''));
-$('#nextBtn').addEventListener('click', () => playNext('skipped.'));
-$('#blockBtn').addEventListener('click', () => { if (current) blockItem(current.id); });
-$('#clearMoodsBtn').addEventListener('click', () => { activeFilters.clear(); render(); setStatus('moods cleared.'); });
-$('#surpriseBtn').addEventListener('click', () => { playItem(chooseNext({surprise:true}), 'surprise pick.'); });
-$('#clearBlockedBtn').addEventListener('click', () => {
-  if (!blocked.size) return;
-  if (confirm('Clear every blocked audio for this browser?')) {
-    blocked.clear();
-    saveBlocked();
-    render();
-    setStatus('blocked list cleared.');
+$('#playBtn').addEventListener('click', async () => {
+  const item = queued || chooseNext();
+  if (!item) return setStatus('nothing');
+  current = item;
+  addHistory(item);
+  renderMemory();
+  if (player.src && player.src.includes(item.audio_url)) {
+    try { await player.play(); } catch (err) { setStatus('tap play'); }
+  } else {
+    showItem(item, {autoplay:true, remember:true});
   }
 });
+$('#nextBtn').addEventListener('click', () => showItem(chooseNext(), {autoplay:true, remember:true}));
+$('#neverBtn').addEventListener('click', () => { const item = activeItem(); if (item) blockItem(item.id); });
+$('#clearBtn').addEventListener('click', () => { wantFilters.clear(); avoidFilters.clear(); renderChips(); showItem(chooseNext(), {autoplay:false, remember:false}); });
+$('#againBtn').addEventListener('click', () => {
+  player.pause();
+  current = null;
+  queued = null;
+  wantFilters.clear();
+  avoidFilters.clear();
+  roleRequirement = null;
+  contentPreference = 'both';
+  questionIndex = 0;
+  radio.classList.remove('on');
+  gate.classList.remove('gone');
+  renderQuestion();
+});
+$('#clearBlockedBtn').addEventListener('click', () => { blocked.clear(); saveBlocked(); renderMemory(); });
 
-player.addEventListener('ended', () => playNext('finished. rolling the next one.'));
+player.addEventListener('play', () => { if (queued) current = queued; });
+player.addEventListener('ended', () => showItem(chooseNext(), {autoplay:true, remember:true}));
 player.addEventListener('error', () => {
-  if (current) failedThisSession.add(current.id);
-  playNext('that file could not load, so i skipped it. check the filename in /audio.');
+  const item = activeItem();
+  if (item) failedThisSession.add(item.id);
+  setStatus('missing');
 });
 
-render();
-setStatus(`${LIBRARY.length} audios loaded.`);
+renderQuestion();
+renderMemory();
 </script>
 </body>
 </html>
