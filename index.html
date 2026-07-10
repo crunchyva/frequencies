@@ -3872,14 +3872,6 @@ const FILTERS = [
 
 const QUESTIONS = [
   {
-    text: 'what kind of audio are you looking for?',
-    choices: [
-      { label: 'sfw', content: 'sfw' },
-      { label: 'nsfw', content: 'nsfw' },
-      { label: 'either', content: 'both' }
-    ]
-  },
-  {
     text: 'how are you feeling?',
     choices: [
       { label: 'tender', want: ['soft', 'romantic'] },
@@ -3933,7 +3925,7 @@ let excludedYears = new Set(JSON.parse(localStorage.getItem(YEARS_KEY) || '[]').
 let questionIndex = 0;
 let changeToken = 0;
 let roleRequirement = null;
-let contentPreference = 'both';
+let contentPreference = 'nsfw';
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function cleanDisplayTitle(title) {
@@ -4273,7 +4265,7 @@ $('#againBtn').addEventListener('click', () => {
   wantFilters.clear();
   avoidFilters.clear();
   roleRequirement = null;
-  contentPreference = 'both';
+  contentPreference = 'nsfw';
   questionIndex = 0;
   questionTransitioning = false;
   radio.classList.remove('on');
