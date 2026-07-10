@@ -160,6 +160,14 @@
       margin: 0 0 12px;
     }
     .meta { color: var(--dim); font-size: 14px; min-height: 20px; }
+    .nowTags {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      margin-top: 8px;
+      overflow-wrap: anywhere;
+    }
+    .tagIntro { color: var(--dim); }
     audio {
       width: 100%;
       margin: 16px 0 14px;
@@ -229,6 +237,7 @@
       <div class="eyebrow">now playing</div>
       <div class="title" id="nowTitle"></div>
       <div class="meta" id="nowMeta"></div>
+      <div class="nowTags" id="nowTags"></div>
       <audio id="player" controls preload="metadata"></audio>
       <div class="smallrow">
         <button class="primary" id="playBtn">play</button>
@@ -241,10 +250,6 @@
 
     <section class="moods" aria-label="mood controls">
       <div class="moodBlock">
-        <div class="moodLabel">years included</div>
-        <div class="chips" id="yearChips"></div>
-      </div>
-      <div class="moodBlock">
         <div class="moodLabel">include</div>
         <div class="chips" id="wantChips"></div>
       </div>
@@ -252,9 +257,9 @@
         <div class="moodLabel">exclude</div>
         <div class="chips" id="avoidChips"></div>
       </div>
-      <div class="smallrow">
-        <button class="quiet" id="clearBtn">clear</button>
-        <button class="quiet" id="againBtn">hello again</button>
+      <div class="moodBlock">
+        <div class="moodLabel">years included</div>
+        <div class="chips" id="yearChips"></div>
       </div>
     </section>
 
@@ -3671,202 +3676,134 @@ const LIBRARY = [
 ];
 const FILTERS = [
   {
-    "id": "soft",
-    "label": "soft",
-    "terms": [
-      "soft",
-      "gentle",
-      "sweet",
-      "tender",
-      "reassuring",
-      "comfort",
-      "slow",
-      "relax",
-      "cuddles",
-      "aftercare",
-      "pillowtalk"
-    ]
+    id: 'sweet',
+    label: 'sweet',
+    terms: ['sweet', 'sweets', 'sweetheart', 'baby', 'my love', 'my sweet', 'cute', 'cutie', 'bean']
   },
   {
-    "id": "sleepy",
-    "label": "sleepy",
-    "terms": [
-      "sleepy",
-      "morning",
-      "bed",
-      "nap",
-      "yawn",
-      "sleep aid",
-      "waking up",
-      "cuddles",
-      "rain"
-    ]
+    id: 'soft',
+    label: 'soft',
+    terms: ['soft', 'gentle', 'slow', 'slow start', 'slow burn', 'soft spoken', 'softspoken', 'tender', 'relax', 'relaxing']
   },
   {
-    "id": "romantic",
-    "label": "romantic",
-    "terms": [
-      "romance",
-      "romantic",
-      "love",
-      "l-bomb",
-      "confession",
-      "friends to lovers",
-      "established relationship",
-      "my love",
-      "domestic",
-      "bfe"
-    ]
+    id: 'bfe',
+    label: 'BFE',
+    terms: ['bfe', 'boyfriend', 'domestic', 'established relationship', 'love', 'sweetheart', 'my love', 'coming home']
   },
   {
-    "id": "teasing",
-    "label": "teasing",
-    "terms": [
-      "teasing",
-      "tease",
-      "fluster",
-      "menace",
-      "challenge",
-      "denial",
-      "bad idea",
-      "not fair",
-      "slippery slope"
-    ]
+    id: 'whispers',
+    label: 'whispers',
+    terms: ['whispers', 'whisper', 'hushed voice', 'soft spoken', 'softspoken', 'binaural', 'stereo']
   },
   {
-    "id": "praise",
-    "label": "praise",
-    "terms": [
-      "praise",
-      "good girl",
-      "good boy",
-      "encouragement",
-      "appreciation",
-      "proud",
-      "reassurance"
-    ]
+    id: 'teasing',
+    label: 'teasing',
+    terms: ['teasing', 'tease', 'fluster', 'menace', 'denial', 'light denial', 'condescending', 'not fair', 'challenge']
   },
   {
-    "id": "dominant",
-    "label": "dominant",
-    "terms": [
-      "mdom",
-      "dom",
-      "sir",
-      "directions",
-      "possessive",
-      "manhandling",
-      "pinning",
-      "control",
-      "good girl"
-    ]
+    id: 'grinding',
+    label: 'grinding',
+    terms: ['grinding', 'thigh grinding', 'outercourse', 'hips', 'hip grabbing', 'lap', 'lap sitting', 'rubbing']
   },
   {
-    "id": "submissive",
-    "label": "submissive",
-    "terms": [
-      "msub",
-      "whimper",
-      "whimpers",
-      "pleading",
-      "begging",
-      "nervous",
-      "shy"
-    ]
+    id: 'kissing',
+    label: 'kissing',
+    terms: ['kissing', 'kisses', 'making out', 'shoulder kisses']
   },
   {
-    "id": "switch",
-    "label": "switchy",
-    "terms": [
-      "switch",
-      "switchy",
-      "mdom to msub",
-      "msub to mdom",
-      "dom to sub",
-      "sub to dom",
-      "control swap"
-    ]
+    id: 'creampie',
+    label: 'creampie',
+    terms: ['creampie', 'breeding', 'breeding mention', 'cum inside', 'fill you', 'filled', 'raw', 'unprotected sex', 'several creampies']
   },
   {
-    "id": "story",
-    "label": "story-ish",
-    "terms": [
-      "sci-fi",
-      "ghost",
-      "catboy",
-      "chess",
-      "tour guide",
-      "professor",
-      "neighbour",
-      "neighbor",
-      "resort",
-      "bouldering",
-      "cabin",
-      "spaceship",
-      "library",
-      "script"
-    ]
+    id: 'encouragement',
+    label: 'encouragement',
+    terms: ['cum for me', 'cum with me', 'good girl', 'good boy', 'praise', 'encouragement', 'talking you through it', 'feel good for me', 'listener orgasm', 'orgasm', 'you can do it']
   },
   {
-    "id": "silly",
-    "label": "silly",
-    "terms": [
-      "silly",
-      "laughs",
-      "laughter",
-      "himbo",
-      "dorky",
-      "catboy",
-      "meow",
-      "joke",
-      "playful",
-      "stupid"
-    ]
+    id: 'aftercare',
+    label: 'aftercare',
+    terms: ['aftercare', 'reassuring aftercare', 'pillowtalk', 'soft pillowtalk', 'cuddles', 'cuddling', 'comfort']
   },
   {
-    "id": "ramble",
-    "label": "rambly",
-    "terms": [
-      "ramble",
-      "ramblefap",
-      "talk",
-      "rambles",
-      "questionnaire",
-      "ama",
-      "creative rut"
-    ]
+    id: 'comfort',
+    label: 'comfort',
+    terms: ['comfort', 'comforting', 'reassuring', 'reassurance', 'sad', 'storm', 'rain sfx', "i'm right here", 'stress relief']
   },
   {
-    "id": "sfx",
-    "label": "rain / sfx",
-    "terms": [
-      "sfx",
-      "rain",
-      "car sfx",
-      "birds",
-      "binaural",
-      "stereo",
-      "heartbeat",
-      "heartbeats",
-      "keyboard",
-      "audio in an audio"
-    ]
+    id: 'sleepy',
+    label: 'sleepy',
+    terms: ['sleepy', 'sleepy morning', 'morning voice', 'stay in bed', 'staying in bed', 'nap', 'yawn', 'blanket', 'waking up']
   },
   {
-    "id": "intense",
-    "label": "more intense",
-    "terms": [
-      "overstim",
-      "rough",
-      "filthy",
-      "dirty talk",
-      "degradation",
-      "breathplay",
-      "mind games",
-      "locked in",
-      "public",
-      "semi-public"
-    ]
+    id: 'domestic',
+    label: 'domestic',
+    terms: ['domestic', 'making coffee', 'coming home', 'cabin trip', 'staying in', 'making dinner', 'house', 'home']
+  },
+  {
+    id: 'friends',
+    label: 'friends to lovers',
+    terms: ['friends to lovers', 'friend to lover', 'neighbors to lovers', 'neighbours to lovers', 'confession', 'pining', 'mutual obsession']
+  },
+  {
+    id: 'risky',
+    label: 'risky',
+    terms: ['public', 'semi-public', 'interrupted', 'bad idea', 'we should stop', "don't move", 'sneaking away', 'locked in']
+  },
+  {
+    id: 'silly',
+    label: 'silly',
+    terms: ['silly', 'laughs', 'laughter', 'himbo', 'dorky', 'playful', 'joke', 'goofy', 'corn that goes pop']
+  },
+  {
+    id: 'rambly',
+    label: 'rambly',
+    terms: ['ramble', 'rambles', 'ramblefap', 'danish rambles', 'romance trope talk', 'talk', 'questionnaire', 'ama', 'creative rut']
+  },
+  {
+    id: 'wet',
+    label: 'wet sounds',
+    terms: ['wet sounds', 'wetsounds', 'wet sound', 'spit', 'slippery', 'messy orgasm', 'a little spit']
+  },
+  {
+    id: 'oral',
+    label: 'oral',
+    terms: ['oral', 'cunnilingus', 'mutual oral', 'blowjob', 'oral fixation', 'face sitting', 'mouth']
+  },
+  {
+    id: 'cockwarming',
+    label: 'cockwarming',
+    terms: ['cockwarming', 'cock warming', 'cockwarm', 'stay inside', 'inside while']
+  },
+  {
+    id: 'praise',
+    label: 'praise',
+    terms: ['praise', 'good girl', 'good boy', 'encouragement', 'appreciation', 'proud', 'feel good for me']
+  },
+  {
+    id: 'switch',
+    label: 'switch',
+    exactTags: ['switch', 'switchy']
+  },
+  {
+    id: 'mdom',
+    label: 'mdom',
+    terms: ['mdom', 'gentle mdom', 'good girl', 'guiding', 'directions', 'pinning', 'manhandling', 'possessive', 'call me sir']
+  },
+  {
+    id: 'msub',
+    label: 'msub',
+    terms: ['msub', 'whimpers', 'whines', 'good boy', 'all yours', 'begging', 'pleading', 'nervous', 'shy']
+  },
+  {
+    id: 'danish',
+    label: 'danish',
+    terms: ['danish', 'danish accent', 'danish rambles']
+  },
+  {
+    id: 'spanish',
+    label: 'spanish',
+    terms: ['spanish', 'bilingual', 'trilingual']
   }
 ];
 
@@ -3874,27 +3811,27 @@ const QUESTIONS = [
   {
     text: 'how are you feeling?',
     choices: [
-      { label: 'tender', want: ['soft', 'romantic'] },
+      { label: 'tender', want: ['soft', 'sweet', 'comfort'] },
       { label: 'sleepy', want: ['sleepy', 'soft'] },
-      { label: 'needy', want: ['teasing', 'intense'] },
-      { label: 'silly', want: ['story', 'silly'] }
+      { label: 'needy', want: ['teasing', 'encouragement', 'grinding'] },
+      { label: 'silly', want: ['silly', 'rambly'] }
     ]
   },
   {
     text: 'how intense?',
     choices: [
-      { label: 'soft', want: ['soft', 'sleepy'], avoid: ['intense'] },
-      { label: 'gentle', want: ['soft', 'romantic'] },
-      { label: 'building', want: ['romantic', 'teasing'] },
-      { label: 'intense', want: ['intense', 'teasing'] }
+      { label: 'soft', want: ['soft', 'sleepy', 'aftercare'], avoid: ['risky'] },
+      { label: 'gentle', want: ['soft', 'sweet', 'bfe'] },
+      { label: 'building', want: ['teasing', 'friends', 'kissing'] },
+      { label: 'intense', want: ['risky', 'creampie', 'wet'] }
     ]
   },
   {
     text: 'the listener is..?',
     choices: [
-      { label: 'submissive', require: 'dominant' },
-      { label: 'dominant', require: 'submissive' },
-      { label: 'switchy', require: 'switch' },
+      { label: 'submissive', require: 'mdom', want: ['mdom', 'praise', 'encouragement'] },
+      { label: 'dominant', require: 'msub', want: ['msub'] },
+      { label: 'switch', require: 'switch', want: ['switch'] },
       { label: 'no preference', require: null }
     ]
   }
@@ -3907,6 +3844,7 @@ const radio = $('#radio');
 const now = $('#now');
 const nowTitle = $('#nowTitle');
 const nowMeta = $('#nowMeta');
+const nowTags = $('#nowTags');
 const statusEl = $('#status');
 const sourceLink = $('#sourceLink');
 const historyEl = $('#history');
@@ -3939,16 +3877,19 @@ const ALL_YEARS = [...new Set(LIBRARY.map(item => item.year).filter(Boolean))].s
 
 function normalize(s) { return String(s || '').toLowerCase(); }
 function haystack(item) { return normalize([item.title, item.audience, ...(item.tags || [])].join(' ')); }
+function itemTags(item) { return (item.tags || []).map(tag => normalize(tag).trim()); }
 function filterMatches(item, filter) {
+  const tags = itemTags(item);
+  if (filter.exactTags && filter.exactTags.some(term => tags.includes(normalize(term)))) return true;
   const h = haystack(item);
-  return filter.terms.some(term => h.includes(normalize(term)));
+  return (filter.terms || []).some(term => h.includes(normalize(term)));
 }
 function hardRoleMatches(item, role) {
   if (!role) return true;
   const tagText = normalize((item.tags || []).join(' | '));
-  if (role === 'dominant') return /\bmdom\b/.test(tagText);
-  if (role === 'submissive') return /\bmsub\b/.test(tagText);
-  if (role === 'switch') return /\bswitchy?\b|\bmdom\s+to\s+msub\b|\bmsub\s+to\s+mdom\b|control swap/.test(tagText);
+  if (role === 'mdom') return /\bmdom\b/.test(tagText);
+  if (role === 'msub') return /\bmsub\b/.test(tagText);
+  if (role === 'switch') return itemTags(item).some(tag => tag === 'switch' || tag === 'switchy');
   return true;
 }
 function isSfw(item) {
@@ -4062,10 +4003,17 @@ function showNext(showOptions = {}) {
   return showItem(item, { ...showOptions, replayed: lastChoiceWasReplay });
 }
 
+function formatNumber(n) { return Number(n || 0).toLocaleString(); }
 function formatMeta(item) {
+  const bits = [];
+  if (item.plays) bits.push(`${formatNumber(item.plays)} plays`);
+  bits.push(item.date_display || 'date unknown');
+  return bits.filter(Boolean).join(' · ');
+}
+function formatTags(item) {
   const tags = (item.tags && item.tags.length) ? item.tags : [item.audience].filter(Boolean);
-  const date = item.date_display || 'date unknown';
-  return [date, tags.join(' · ')].filter(Boolean).join(' · ');
+  if (!tags.length) return '';
+  return `<span class="tagIntro">tags:</span> ${tags.join(' · ')}`;
 }
 
 async function showItem(item, {autoplay=false, remember=false, replayed=false} = {}) {
@@ -4080,6 +4028,7 @@ async function showItem(item, {autoplay=false, remember=false, replayed=false} =
   if (autoplay) current = item;
   nowTitle.textContent = item.title;
   nowMeta.textContent = formatMeta(item);
+  nowTags.innerHTML = formatTags(item);
   sourceLink.href = item.source_url || '#';
   sourceLink.hidden = !item.source_url;
   player.src = item.audio_url;
@@ -4156,8 +4105,7 @@ function renderYearChips() {
 function renderFilterButtons(containerId, mode) {
   const wrap = $(containerId);
   wrap.innerHTML = '';
-  const chipFilters = FILTERS.filter(f => !['dominant', 'submissive', 'switch'].includes(f.id));
-  for (const filter of chipFilters) {
+  for (const filter of FILTERS) {
     const isOn = mode === 'want' ? wantFilters.has(filter.id) : avoidFilters.has(filter.id);
     const btn = document.createElement('button');
     btn.className = `chip ${mode}${isOn ? ' on' : ''}`;
@@ -4257,21 +4205,6 @@ $('#playBtn').addEventListener('click', async () => {
 });
 $('#nextBtn').addEventListener('click', () => showNext({autoplay:true, remember:true}));
 $('#neverBtn').addEventListener('click', () => { const item = activeItem(); if (item) blockItem(item.id); });
-$('#clearBtn').addEventListener('click', () => { wantFilters.clear(); avoidFilters.clear(); renderChips(); showNext({autoplay:false, remember:false}); });
-$('#againBtn').addEventListener('click', () => {
-  player.pause();
-  current = null;
-  queued = null;
-  wantFilters.clear();
-  avoidFilters.clear();
-  roleRequirement = null;
-  contentPreference = 'nsfw';
-  questionIndex = 0;
-  questionTransitioning = false;
-  radio.classList.remove('on');
-  gate.classList.remove('gone', 'started', 'swapping');
-  renderQuestion();
-});
 $('#clearBlockedBtn').addEventListener('click', () => { blocked.clear(); saveBlocked(); renderMemory(); });
 
 player.addEventListener('play', () => { if (queued) current = queued; });
