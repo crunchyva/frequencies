@@ -3936,13 +3936,20 @@ function filterMatches(item, filter) {
   const h = haystack(item);
   return (filter.terms || []).some(term => h.includes(normalize(term)));
 }
+function itemRole(item) {
+  const tags = itemTags(item);
+  const tagText = tags.join(' | ');
+  const hasMdom = /\bmdom\b/.test(tagText);
+  const hasMsub = /\bmsub\b/.test(tagText);
+  const explicitSwitch = tags.some(tag => tag === 'switch' || tag === 'switchy');
+  if (explicitSwitch || (hasMdom && hasMsub)) return 'switch';
+  if (hasMsub) return 'msub';
+  if (hasMdom) return 'mdom';
+  return null;
+}
 function hardRoleMatches(item, role) {
   if (!role) return true;
-  const tagText = normalize((item.tags || []).join(' | '));
-  if (role === 'mdom') return /\bmdom\b/.test(tagText);
-  if (role === 'msub') return /\bmsub\b/.test(tagText);
-  if (role === 'switch') return itemTags(item).some(tag => tag === 'switch' || tag === 'switchy');
-  return true;
+  return itemRole(item) === role;
 }
 function isSfw(item) {
   const tagText = normalize([item.title, ...(item.tags || [])].join(' | '));
@@ -3978,10 +3985,13 @@ const AUDIO_BUCKETS = [
 ];
 
 function bucketFor(item) {
+  const role = itemRole(item);
+  if (role === 'mdom' || role === 'msub') return role;
   const tags = itemTags(item);
   let bestBucket = AUDIO_BUCKETS[0][0];
   let bestScore = -1;
   for (const [bucket, signals] of AUDIO_BUCKETS) {
+    if (bucket === 'mdom' || bucket === 'msub') continue;
     const score = signals.reduce((sum, [term, weight]) => {
       return sum + tags.filter(tag => tag.includes(normalize(term))).length * weight;
     }, 0);
@@ -4012,6 +4022,7 @@ function renderQuickChips() {
     btn.textContent = label;
     btn.addEventListener('click', () => {
       activeBucket = label;
+      roleRequirement = label === 'mdom' || label === 'msub' ? label : null;
       landingWeighted = true;
       releaseWord(label, btn);
       openRadio();
@@ -4044,15 +4055,26 @@ function baseCandidates({ignoreHistory=false} = {}) {
   pool = pool.filter(item => contentMatches(item));
   pool = pool.filter(item => yearMatches(item));
   if (activeBucket) pool = pool.filter(item => BUCKET_BY_ID.get(item.id) === activeBucket);
-  if (roleRequirement && roleRequirement !== 'switch') {
-    pool = pool.filter(item => hardRoleMatches(item, roleRequirement));
-  }
   if (avoidFilters.size) pool = pool.filter(item => !avoided(item));
   if (!ignoreHistory) {
     const played = heardIds();
     pool = pool.filter(item => !played.has(item.id));
   }
   return pool;
+}
+
+function preferredRole() {
+  if (roleRequirement) return roleRequirement;
+  if (wantFilters.has('msub')) return 'msub';
+  if (wantFilters.has('mdom')) return 'mdom';
+  return null;
+}
+
+function prioritizeRole(pool) {
+  const role = preferredRole();
+  if (!role) return pool;
+  const matching = pool.filter(item => hardRoleMatches(item, role));
+  return matching.length ? matching : pool;
 }
 
 function score(item) {
@@ -4100,19 +4122,16 @@ function chooseNext() {
 
   if (!fineTuned && history.length) {
     const previous = activeItem();
-    const pool = naturalNextCandidates();
+    const pool = prioritizeRole(naturalNextCandidates());
     return weightedPick(pool.map(item => [item, continuityWeight(item, previous)]));
   }
 
   let pool = baseCandidates();
-
-  if (roleRequirement === 'switch') {
-    const switchPool = pool.filter(item => hardRoleMatches(item, 'switch'));
-    if (switchPool.length) pool = switchPool;
-  }
+  pool = prioritizeRole(pool);
 
   if (!pool.length) {
     pool = baseCandidates({ignoreHistory:true});
+    pool = prioritizeRole(pool);
     if (pool.length) lastChoiceWasReplay = true;
   }
 
@@ -4239,6 +4258,7 @@ function renderYearChips() {
       if (excludedYears.has(key)) excludedYears.delete(key);
       else excludedYears.add(key);
       fineTuned = true;
+      activeBucket = null;
       saveYears();
       renderYearChips();
       if (!current || player.paused) showNext({autoplay:false, remember:false});
@@ -4262,6 +4282,7 @@ function renderFilterButtons(containerId, mode) {
       if (target.has(filter.id)) target.delete(filter.id);
       else { target.add(filter.id); other.delete(filter.id); }
       fineTuned = true;
+      activeBucket = null;
       renderChips();
     });
     wrap.appendChild(btn);
@@ -4283,6 +4304,7 @@ function renderRoleChips() {
     btn.addEventListener('click', () => {
       roleRequirement = value;
       fineTuned = true;
+      activeBucket = null;
       renderRoleChips();
     });
     wrap.appendChild(btn);
