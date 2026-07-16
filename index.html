@@ -3915,6 +3915,7 @@ let roleRequirement = null;
 let contentPreference = 'nsfw';
 let activeBucket = null;
 let landingWeighted = false;
+let fineTuned = false;
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function cleanDisplayTitle(title) {
@@ -4063,8 +4064,46 @@ function score(item) {
   return s;
 }
 
+function weightedPick(weighted) {
+  const total = weighted.reduce((sum, [, weight]) => sum + weight, 0);
+  let roll = Math.random() * total;
+  for (const [item, weight] of weighted) {
+    roll -= weight;
+    if (roll <= 0) return item;
+  }
+  return weighted.length ? weighted[weighted.length - 1][0] : null;
+}
+
+function naturalNextCandidates() {
+  const played = heardIds();
+  return LIBRARY.filter(item => {
+    return !played.has(item.id)
+      && !blocked.has(item.id)
+      && !failedThisSession.has(item.id)
+      && contentMatches(item)
+      && yearMatches(item);
+  });
+}
+
+function continuityWeight(item, previous) {
+  const popularity = Math.sqrt(Math.max(1, Number(item.plays) || 1));
+  if (!previous) return popularity;
+  const previousTags = new Set(itemTags(previous));
+  const sharedTags = itemTags(item).filter(tag => previousTags.has(tag) && !/^m4/i.test(tag)).length;
+  const sharedClusters = FILTERS.filter(filter => filterMatches(item, filter) && filterMatches(previous, filter)).length;
+  const sameBucket = BUCKET_BY_ID.get(item.id) === BUCKET_BY_ID.get(previous.id);
+  return popularity * (1 + sharedTags * 1.25 + sharedClusters * 1.75 + (sameBucket ? 2 : 0));
+}
+
 function chooseNext() {
   lastChoiceWasReplay = false;
+
+  if (!fineTuned && history.length) {
+    const previous = activeItem();
+    const pool = naturalNextCandidates();
+    return weightedPick(pool.map(item => [item, continuityWeight(item, previous)]));
+  }
+
   let pool = baseCandidates();
 
   if (roleRequirement === 'switch') {
@@ -4083,13 +4122,7 @@ function chooseNext() {
       const popularity = Math.sqrt(Math.max(1, Number(item.plays) || 1));
       return [item, popularity * (1 + wantCount(item) * 1.5)];
     });
-    const total = weighted.reduce((sum, [, weight]) => sum + weight, 0);
-    let roll = Math.random() * total;
-    for (const [item, weight] of weighted) {
-      roll -= weight;
-      if (roll <= 0) return item;
-    }
-    return weighted[weighted.length - 1][0];
+    return weightedPick(weighted);
   }
   const ranked = pool.map(item => [item, score(item)]).sort((a,b) => b[1] - a[1]);
   return ranked[0][0];
@@ -4132,7 +4165,7 @@ function formatTags(item) {
 }
 
 async function showItem(item, {autoplay=false, remember=false, replayed=false} = {}) {
-  if (!item) { setStatus('nothing'); return; }
+  if (!item) { setStatus(fineTuned ? 'nothing' : 'nothing new left'); return; }
   const token = ++changeToken;
   now.classList.add('changing');
   setStatus('');
@@ -4205,6 +4238,7 @@ function renderYearChips() {
     btn.addEventListener('click', () => {
       if (excludedYears.has(key)) excludedYears.delete(key);
       else excludedYears.add(key);
+      fineTuned = true;
       saveYears();
       renderYearChips();
       if (!current || player.paused) showNext({autoplay:false, remember:false});
@@ -4227,6 +4261,7 @@ function renderFilterButtons(containerId, mode) {
       const other = mode === 'want' ? avoidFilters : wantFilters;
       if (target.has(filter.id)) target.delete(filter.id);
       else { target.add(filter.id); other.delete(filter.id); }
+      fineTuned = true;
       renderChips();
     });
     wrap.appendChild(btn);
@@ -4247,6 +4282,7 @@ function renderRoleChips() {
     btn.textContent = label;
     btn.addEventListener('click', () => {
       roleRequirement = value;
+      fineTuned = true;
       renderRoleChips();
     });
     wrap.appendChild(btn);
