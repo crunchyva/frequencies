@@ -42,6 +42,24 @@
       color: var(--soft);
       cursor: pointer;
     }
+    .agePending main, .agePending .mark { visibility: hidden; }
+    .ageGate {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: var(--bg);
+      transition: opacity .35s ease;
+    }
+    .ageGate.gone { opacity: 0; pointer-events: none; }
+    .ageGateCard { width: min(360px, 100%); }
+    .ageQuestion { margin: 0 0 25px; color: var(--soft); font-size: clamp(25px, 5vw, 34px); font-weight: 400; }
+    .ageActions { display: flex; gap: 18px; align-items: center; }
+    .ageAction { padding: 4px 0; color: var(--muted); border-bottom: 1px solid var(--line); }
+    .ageAction:hover, .ageAction:focus-visible { color: var(--text); border-color: var(--accent); }
+    .ageMessage { min-height: 22px; margin-top: 20px; color: var(--dim); font-size: 14px; }
     .mark {
       position: fixed;
       right: 18px;
@@ -287,7 +305,17 @@
     }
   </style>
 </head>
-<body>
+<body class="agePending">
+<section class="ageGate" id="ageGate" aria-labelledby="ageQuestion">
+  <div class="ageGateCard">
+    <h1 class="ageQuestion" id="ageQuestion">are you over 18?</h1>
+    <div class="ageActions" id="ageActions">
+      <button class="ageAction" id="ageYesBtn" type="button">yes</button>
+      <button class="ageAction" id="ageNoBtn" type="button">no</button>
+    </div>
+    <div class="ageMessage" id="ageMessage" aria-live="polite"></div>
+  </div>
+</section>
 <main>
   <section class="gate" id="gate" aria-live="polite">
     <h1 class="hello">hi</h1>
@@ -3904,6 +3932,7 @@ const blockedEl = $('#blocked');
 
 const BLOCKED_KEY = 'frequencies.blocked.v1';
 const YEARS_KEY = 'frequencies.excludedYears.v1';
+const AGE_KEY = 'frequencies.ageConfirmed.v1';
 let wantFilters = new Set();
 let avoidFilters = new Set();
 let history = [];
@@ -3919,6 +3948,25 @@ let activeBucket = null;
 let landingWeighted = false;
 let fineTuned = false;
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function enterSite({persist=false, animate=true} = {}) {
+  if (persist) localStorage.setItem(AGE_KEY, 'true');
+  document.body.classList.remove('agePending');
+  if (!animate) {
+    $('#ageGate').hidden = true;
+    return;
+  }
+  $('#ageGate').classList.add('gone');
+  window.setTimeout(() => { $('#ageGate').hidden = true; }, 360);
+}
+
+if (localStorage.getItem(AGE_KEY) === 'true') enterSite({animate:false});
+
+$('#ageYesBtn').addEventListener('click', () => enterSite({persist:true}));
+$('#ageNoBtn').addEventListener('click', () => {
+  $('#ageActions').hidden = true;
+  $('#ageMessage').textContent = 'this page is for adults only';
+});
 
 function cleanDisplayTitle(title) {
   return String(title || '')
