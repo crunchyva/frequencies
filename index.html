@@ -6,7 +6,11 @@
   <title>frequencies</title>
   <script>
     try {
-      if (localStorage.getItem('frequencies.ageConfirmed.v1') === 'true') {
+      const ageKey = 'frequencies.ageConfirmed.v1';
+      const resume = JSON.parse(localStorage.getItem('frequencies.resume.v1') || 'null');
+      const previouslyEntered = localStorage.getItem(ageKey) === 'true' || Boolean(resume && resume.savedAt);
+      if (previouslyEntered) {
+        localStorage.setItem(ageKey, 'true');
         document.documentElement.classList.add('ageConfirmed');
       }
     } catch (_) {}
@@ -3976,7 +3980,8 @@ function saveResumeState({force=false} = {}) {
     roleRequirement,
     activeBucket,
     landingWeighted,
-    fineTuned
+    fineTuned,
+    ageConfirmed: true
   }));
 }
 
@@ -4005,7 +4010,10 @@ function enterSite({persist=false, animate=true} = {}) {
   window.setTimeout(() => { $('#ageGate').hidden = true; }, 360);
 }
 
-if (localStorage.getItem(AGE_KEY) === 'true') enterSite({animate:false});
+if (localStorage.getItem(AGE_KEY) === 'true' || document.documentElement.classList.contains('ageConfirmed')) {
+  localStorage.setItem(AGE_KEY, 'true');
+  enterSite({animate:false});
+}
 
 $('#ageYesBtn').addEventListener('click', () => enterSite({persist:true}));
 $('#ageNoBtn').addEventListener('click', () => {
