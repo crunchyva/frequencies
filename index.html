@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>frequencies</title>
+  <script>
+    try {
+      if (localStorage.getItem('frequencies.ageConfirmed.v1') === 'true') {
+        document.documentElement.classList.add('ageConfirmed');
+      }
+    } catch (_) {}
+  </script>
   <style>
     :root {
       --bg: #040915;
@@ -54,6 +61,7 @@
       transition: opacity .35s ease;
     }
     .ageGate.gone { opacity: 0; pointer-events: none; }
+    .ageConfirmed .ageGate { display: none; }
     .ageGateCard { width: min(360px, 100%); }
     .ageQuestion { margin: 0 0 25px; color: var(--soft); font-size: clamp(25px, 5vw, 34px); font-weight: 400; }
     .ageActions { display: flex; gap: 18px; align-items: center; }
@@ -4140,11 +4148,11 @@ function heardIds() {
   return new Set(history.map(h => h.id));
 }
 
-function baseCandidates({ignoreHistory=false} = {}) {
+function baseCandidates({ignoreHistory=false, ignoreBucket=false} = {}) {
   let pool = LIBRARY.filter(item => !blocked.has(item.id) && !failedThisSession.has(item.id));
   pool = pool.filter(item => contentMatches(item));
   pool = pool.filter(item => yearMatches(item));
-  if (activeBucket) pool = pool.filter(item => BUCKET_BY_ID.get(item.id) === activeBucket);
+  if (activeBucket && !ignoreBucket) pool = pool.filter(item => BUCKET_BY_ID.get(item.id) === activeBucket);
   if (avoidFilters.size) pool = pool.filter(item => !avoided(item));
   if (!ignoreHistory) {
     const played = heardIds();
@@ -4254,8 +4262,19 @@ function chooseNext() {
   let pool = baseCandidates();
   pool = prioritizeRole(pool);
 
+  if (!pool.length && activeBucket) {
+    pool = baseCandidates({ignoreBucket:true});
+    pool = prioritizeRole(pool);
+  }
+
   if (!pool.length) {
     pool = baseCandidates({ignoreHistory:true});
+    pool = prioritizeRole(pool);
+    if (pool.length) lastChoiceWasReplay = true;
+  }
+
+  if (!pool.length && activeBucket) {
+    pool = baseCandidates({ignoreHistory:true, ignoreBucket:true});
     pool = prioritizeRole(pool);
     if (pool.length) lastChoiceWasReplay = true;
   }
