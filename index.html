@@ -287,7 +287,7 @@
 <main>
   <section class="gate" id="gate" aria-live="polite">
     <h1 class="hello">hi</h1>
-    <div class="question">which kind of audio should we begin with?</div>
+    <div class="question">what kind of audio should we begin with?</div>
     <div class="quickChips" id="quickChips" aria-label="audio kinds"></div>
     <button class="surprise" id="surpriseBtn" type="button">surprise me</button>
   </section>
@@ -3778,6 +3778,46 @@ const FILTERS = [
     terms: ['public', 'semi-public', 'interrupted', 'bad idea', 'we should stop', "don't move", 'sneaking away', 'locked in']
   },
   {
+    id: 'public',
+    label: 'public',
+    terms: ['public', 'semi-public', 'semi public']
+  },
+  {
+    id: 'breathplay',
+    label: 'breathplay',
+    terms: ['breathplay', 'light breathplay', 'choking', "don't need to breathe"]
+  },
+  {
+    id: 'degradation',
+    label: 'degradation',
+    terms: ['degradation', 'light degradation', 'humiliation', 'light humiliation', 'condescending']
+  },
+  {
+    id: 'spanking',
+    label: 'spanking',
+    terms: ['spanking', 'light spanking', 'spanks']
+  },
+  {
+    id: 'biting',
+    label: 'biting',
+    terms: ['biting', 'marking']
+  },
+  {
+    id: 'denial',
+    label: 'denial',
+    terms: ['denial', 'light denial', 'slight denial', 'edging', 'overstimulated', 'overstimmed']
+  },
+  {
+    id: 'possessive',
+    label: 'possessive',
+    terms: ['possessive', "you're mine", 'you’re mine', 'call me sir']
+  },
+  {
+    id: 'virgin',
+    label: 'virgin',
+    terms: ['virgin', 'ghost virgin']
+  },
+  {
     id: 'silly',
     label: 'silly',
     terms: ['silly', 'laughs', 'laughter', 'himbo', 'dorky', 'playful', 'joke', 'goofy', 'corn that goes pop']
@@ -3990,7 +4030,9 @@ function baseCandidates({ignoreHistory=false} = {}) {
   pool = pool.filter(item => contentMatches(item));
   pool = pool.filter(item => yearMatches(item));
   if (activeBucket) pool = pool.filter(item => BUCKET_BY_ID.get(item.id) === activeBucket);
-  if (roleRequirement) pool = pool.filter(item => hardRoleMatches(item, roleRequirement));
+  if (roleRequirement && roleRequirement !== 'switch') {
+    pool = pool.filter(item => hardRoleMatches(item, roleRequirement));
+  }
   if (avoidFilters.size) pool = pool.filter(item => !avoided(item));
   if (!ignoreHistory) {
     const played = heardIds();
@@ -4011,6 +4053,11 @@ function score(item) {
 function chooseNext() {
   lastChoiceWasReplay = false;
   let pool = baseCandidates();
+
+  if (roleRequirement === 'switch') {
+    const switchPool = pool.filter(item => hardRoleMatches(item, 'switch'));
+    if (switchPool.length) pool = switchPool;
+  }
 
   if (!pool.length) {
     pool = baseCandidates({ignoreHistory:true});
@@ -4178,8 +4225,8 @@ function renderRoleChips() {
   const roles = [
     ['submissive', 'mdom'],
     ['dominant', 'msub'],
-    ['either', 'switch'],
-    ['no preference', null]
+    ['either', null],
+    ['switch', 'switch']
   ];
   for (const [label, value] of roles) {
     const btn = document.createElement('button');
@@ -4188,7 +4235,6 @@ function renderRoleChips() {
     btn.addEventListener('click', () => {
       roleRequirement = value;
       renderRoleChips();
-      if (!current || player.paused) showNext({autoplay:false, remember:false});
     });
     wrap.appendChild(btn);
   }
