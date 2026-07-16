@@ -4120,6 +4120,19 @@ function weightedPick(weighted) {
   return weighted.length ? weighted[weighted.length - 1][0] : null;
 }
 
+function selectionBaseWeight(item) {
+  const plays = Math.max(1, Number(item.plays) || 1);
+  const timestamp = item.date ? Date.parse(`${item.date}T00:00:00Z`) : NaN;
+  const recentCutoff = Date.UTC(2024, 9, 1);
+  const isRecent = Number.isFinite(timestamp)
+    ? timestamp >= recentCutoff
+    : Number(item.year) >= 2025;
+  if (!isRecent) return Math.sqrt(plays);
+  const year = Number(item.year) || new Date(timestamp).getUTCFullYear() || 2024;
+  const yearBoost = 1 + Math.max(0, year - 2024) * 0.18;
+  return (280 + Math.log10(plays + 10) * 18) * yearBoost;
+}
+
 function naturalNextCandidates() {
   const played = heardIds();
   return LIBRARY.filter(item => {
@@ -4132,7 +4145,7 @@ function naturalNextCandidates() {
 }
 
 function continuityWeight(item, previous) {
-  const popularity = Math.sqrt(Math.max(1, Number(item.plays) || 1));
+  const popularity = selectionBaseWeight(item);
   if (!previous) return popularity;
   const previousTags = new Set(itemTags(previous));
   const sharedTags = itemTags(item).filter(tag => previousTags.has(tag) && !/^m4/i.test(tag)).length;
@@ -4164,7 +4177,7 @@ function chooseNext() {
   if (landingWeighted) {
     const role = preferredRole();
     const weighted = pool.map(item => {
-      const popularity = Math.sqrt(Math.max(1, Number(item.plays) || 1));
+      const popularity = selectionBaseWeight(item);
       return [item, popularity * (1 + wantCount(item) * 1.5) * roleAffinityWeight(item, role)];
     });
     return weightedPick(weighted);
