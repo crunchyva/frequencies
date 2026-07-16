@@ -21,30 +21,16 @@
     html, body { margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      background:
-        radial-gradient(circle at 50% 18%, rgba(169, 188, 233, .11), transparent 0 22rem),
-        linear-gradient(180deg, rgba(10, 21, 42, 0.96), rgba(3, 8, 20, 1)),
-        repeating-linear-gradient(90deg, rgba(86, 109, 157, .035) 0 28px, rgba(86, 109, 157, .015) 28px 56px),
-        var(--bg);
+      background: radial-gradient(circle at 50% 35%, #0a1428 0, var(--bg) 48rem);
       color: var(--text);
       font: 17px/1.45 Georgia, 'Times New Roman', serif;
       overflow-x: hidden;
       position: relative;
     }
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 50% 22%, rgba(228,236,255,.07), transparent 0 10%, transparent 28%),
-        radial-gradient(circle at 50% 70%, rgba(130,152,202,.05), transparent 0 14%, transparent 36%);
-      opacity: .75;
-    }
     main {
-      width: min(680px, calc(100vw - 32px));
+      width: min(920px, calc(100vw - 48px));
       margin: 0 auto;
-      padding: clamp(42px, 11vh, 96px) 0 52px;
+      padding: clamp(54px, 14vh, 132px) 0 64px;
       position: relative;
       z-index: 1;
     }
@@ -63,7 +49,7 @@
       color: var(--dim);
       font-size: 13px;
       letter-spacing: .08em;
-      opacity: .75;
+      opacity: .45;
       user-select: none;
     }
     @keyframes gateFadeIn {
@@ -71,10 +57,11 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .gate {
-      min-height: 55vh;
-      display: grid;
-      align-content: center;
-      gap: 22px;
+      min-height: 68vh;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
       transition: opacity .42s ease, transform .42s ease;
       animation: gateFadeIn .85s ease both;
     }
@@ -86,54 +73,81 @@
       position: absolute;
       visibility: hidden;
     }
-    .hello {
-      font-size: clamp(54px, 15vw, 104px);
-      line-height: .88;
-      letter-spacing: .01em;
-      font-weight: 400;
-      color: var(--text);
-      text-shadow: 0 0 18px rgba(233, 238, 249, .06);
-      max-height: 1.05em;
-      opacity: 1;
-      transform: translateY(0);
-      overflow: hidden;
-      transition: opacity .34s ease, transform .34s ease, max-height .34s ease, margin .34s ease;
-    }
-    .gate.started .hello {
-      opacity: 0;
-      transform: translateY(-8px);
-      max-height: 0;
-      margin-bottom: -22px;
-      pointer-events: none;
-    }
     .question {
-      font-size: clamp(24px, 4vw, 34px);
-      color: var(--soft);
+      font-size: clamp(16px, 2vw, 20px);
+      letter-spacing: .015em;
+      color: var(--muted);
       min-height: 1.25em;
-      max-width: 14ch;
     }
-    .question, .answers, .disclaimer {
+    .hello {
+      margin: 0 0 46px;
+      color: var(--text);
+      font-size: clamp(104px, 17vw, 168px);
+      font-weight: 400;
+      line-height: .72;
+      letter-spacing: -.035em;
+    }
+    .question, .quickChips, .surprise {
       opacity: 1;
       transform: translateY(0);
       transition: opacity .28s ease, transform .28s ease;
     }
     .gate.swapping .question,
-    .gate.swapping .answers,
-    .gate.swapping .disclaimer {
+    .gate.swapping .quickChips,
+    .gate.swapping .surprise {
       opacity: 0;
       transform: translateY(5px);
     }
-    .answers, .chips, .smallrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    .disclaimer { color: var(--dim); font-size: 14px; margin-top: -8px; }
-    .answer {
-      padding: 0 0 2px;
-      color: var(--muted);
-      border-bottom: 1px solid var(--line);
-      transition: color .18s ease, border-color .18s ease, transform .18s ease;
+    .quickChips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px 10px;
+      width: 100%;
+      margin: 38px 0 38px;
     }
-    .answer:hover { color: var(--accent-strong); border-color: var(--accent-strong); transform: translateY(-1px); }
+    .quickChip {
+      min-height: 36px;
+      padding: 5px 14px 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--soft);
+      font-size: 16px;
+      transition: color .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .quickChip:hover, .quickChip:focus-visible {
+      color: var(--text);
+      border-color: var(--accent);
+      background: rgba(165, 184, 231, .055);
+    }
+    .quickChip.on {
+      color: var(--text);
+      border-color: var(--line);
+      background: rgba(165, 184, 231, .075);
+    }
+    .surprise {
+      color: var(--muted);
+      padding: 0 0 3px;
+      border-bottom: 1px solid var(--line);
+      font-size: 16px;
+    }
+    .surprise:hover { color: var(--soft); border-color: var(--accent); }
+    .particles { position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+    .particle {
+      position: absolute;
+      color: var(--accent-strong);
+      font-size: 16px;
+      opacity: 0;
+      animation: drift 2.5s ease-out forwards;
+    }
+    @keyframes drift {
+      0% { opacity: 0; transform: translate(-50%, 0) scale(.94); }
+      16% { opacity: .74; }
+      100% { opacity: 0; transform: translate(calc(-50% + var(--drift-x)), var(--drift-y)) scale(1.08); }
+    }
 
     .radio {
+      width: min(620px, 100%);
+      margin: 0 auto;
       opacity: 0;
       transform: translateY(10px);
       pointer-events: none;
@@ -141,7 +155,7 @@
     }
     .radio.on { opacity: 1; transform: translateY(0); pointer-events: auto; }
     .now {
-      margin: 0 0 34px;
+      margin: 0 0 42px;
       transition: opacity .28s ease, transform .28s ease;
     }
     .now.changing { opacity: 0; transform: translateY(5px); }
@@ -149,13 +163,13 @@
       color: var(--dim);
       font-size: 13px;
       letter-spacing: .06em;
-      margin-bottom: 8px;
+      margin-bottom: 14px;
     }
     .title {
-      font-size: clamp(34px, 7vw, 64px);
-      line-height: .98;
+      font-size: clamp(32px, 7vw, 56px);
+      line-height: 1.04;
       letter-spacing: -.012em;
-      max-width: 11ch;
+      max-width: 14ch;
       overflow-wrap: anywhere;
       margin: 0 0 12px;
     }
@@ -168,12 +182,46 @@
       overflow-wrap: anywhere;
     }
     .tagIntro { color: var(--dim); }
-    audio {
+    audio { display: none; }
+    .timeline { margin: 22px 0 18px; }
+    .seekBar {
+      --progress: 0%;
+      appearance: none;
       width: 100%;
-      margin: 16px 0 14px;
-      opacity: .88;
-      filter: hue-rotate(190deg) saturate(.78) brightness(.9);
+      height: 18px;
+      margin: 0;
+      background: transparent;
+      cursor: pointer;
+      touch-action: none;
     }
+    .seekBar::-webkit-slider-runnable-track {
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(to right, var(--accent) 0 var(--progress), var(--line-soft) var(--progress) 100%);
+    }
+    .seekBar::-webkit-slider-thumb {
+      appearance: none;
+      width: 10px;
+      height: 10px;
+      margin-top: -4px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--accent-strong);
+      box-shadow: 0 0 0 3px rgba(165, 184, 231, .08);
+    }
+    .seekBar::-moz-range-track { height: 2px; border: 0; border-radius: 999px; background: var(--line-soft); }
+    .seekBar::-moz-range-progress { height: 2px; border-radius: 999px; background: var(--accent); }
+    .seekBar::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--accent-strong); }
+    .seekBar:focus-visible { outline: 1px solid var(--line); outline-offset: 4px; }
+    .timeLabels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: -2px;
+      color: var(--dim);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .chips, .smallrow { display: flex; flex-wrap: wrap; gap: 11px; align-items: center; }
     .smallrow { margin-top: 2px; }
     .smallrow button, .smallrow a {
       color: var(--muted);
@@ -186,7 +234,11 @@
     .smallrow .danger:hover { color: var(--danger); border-color: var(--danger); }
     .status { min-height: 20px; margin-top: 10px; color: var(--dim); font-size: 13px; }
 
-    .moods { margin-top: 24px; }
+    .fineTuneToggle { color: var(--dim); padding: 0 0 2px; border-bottom: 1px solid transparent; }
+    .fineTuneToggle:hover { color: var(--muted); border-color: var(--line-soft); }
+    .advanced { margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line-soft); }
+    .advanced[hidden] { display: none; }
+    .moods { margin-top: 10px; }
     .moodBlock { margin: 19px 0; }
     .moodLabel {
       color: var(--dim);
@@ -208,7 +260,8 @@
     .chip.want.on { color: #081024; background: var(--accent); border-color: var(--accent); }
     .chip.avoid.on { color: #f2d8df; border-color: var(--danger); background: rgba(215,161,177,.12); }
     .quiet { color: var(--dim) !important; border-color: transparent !important; }
-    details { margin-top: 34px; color: var(--muted); }
+    .memory { margin-top: 42px; }
+    details { margin-top: 18px; color: var(--muted); }
     summary { cursor: pointer; color: var(--dim); font-size: 14px; }
     ol { padding-left: 20px; }
     li { margin: 8px 0; }
@@ -217,19 +270,26 @@
     .mini button:hover { color: var(--accent-strong); border-color: var(--accent-strong); }
     .empty { color: var(--dim); }
     @media (max-width: 560px) {
-      main { width: calc(100vw - 24px); padding-top: 56px; }
+      main { width: calc(100vw - 32px); padding-top: 48px; }
+      .gate { min-height: 76vh; justify-content: center; }
+      .hello { margin-bottom: 34px; }
       .title { max-width: none; }
+      .quickChips { gap: 8px; margin: 28px 0 30px; }
+      .quickChip { min-height: 38px; padding: 6px 12px 7px; font-size: 15px; }
       .mark { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
   </style>
 </head>
 <body>
 <main>
   <section class="gate" id="gate" aria-live="polite">
-    <div class="hello">hi</div>
-    <div class="question" id="question"></div>
-    <div class="answers" id="answers"></div>
-    <div class="disclaimer">no pressure, you can change these at any time</div>
+    <h1 class="hello">hi</h1>
+    <div class="question">which kind of audio should we begin with?</div>
+    <div class="quickChips" id="quickChips" aria-label="audio kinds"></div>
+    <button class="surprise" id="surpriseBtn" type="button">surprise me</button>
   </section>
 
   <section class="radio" id="radio" aria-live="polite">
@@ -238,43 +298,54 @@
       <div class="title" id="nowTitle"></div>
       <div class="meta" id="nowMeta"></div>
       <div class="nowTags" id="nowTags"></div>
-      <audio id="player" controls preload="metadata"></audio>
+      <audio id="player" preload="metadata"></audio>
+      <div class="timeline">
+        <input class="seekBar" id="seekBar" type="range" min="0" max="100" value="0" step="0.1" aria-label="audio position">
+        <div class="timeLabels" aria-hidden="true"><span id="elapsedTime">0:00</span><span id="durationTime">0:00</span></div>
+      </div>
       <div class="smallrow">
         <button class="primary" id="playBtn">play</button>
         <button id="nextBtn">next</button>
         <button class="danger" id="neverBtn">skip</button>
-        <a id="sourceLink" href="#" target="_blank" rel="noreferrer" hidden>source</a>
       </div>
       <div class="status" id="status"></div>
     </section>
 
-    <section class="moods" aria-label="mood controls">
-      <div class="moodBlock">
-        <div class="moodLabel">include</div>
-        <div class="chips" id="wantChips"></div>
-      </div>
-      <div class="moodBlock">
-        <div class="moodLabel">exclude</div>
-        <div class="chips" id="avoidChips"></div>
-      </div>
-      <div class="moodBlock">
-        <div class="moodLabel">years included</div>
-        <div class="chips" id="yearChips"></div>
+    <button class="fineTuneToggle" id="fineTuneBtn" type="button" aria-expanded="false" aria-controls="advanced">fine tune</button>
+    <section class="advanced" id="advanced" hidden>
+      <section class="moods" aria-label="fine tune">
+        <div class="moodBlock">
+          <div class="moodLabel">listener</div>
+          <div class="chips" id="roleChips"></div>
+        </div>
+        <div class="moodBlock">
+          <div class="moodLabel">include</div>
+          <div class="chips" id="wantChips"></div>
+        </div>
+        <div class="moodBlock">
+          <div class="moodLabel">exclude</div>
+          <div class="chips" id="avoidChips"></div>
+        </div>
+        <div class="moodBlock">
+          <div class="moodLabel">years included</div>
+          <div class="chips" id="yearChips"></div>
+        </div>
+      </section>
+      <div class="smallrow"><a id="sourceLink" href="#" target="_blank" rel="noreferrer" hidden>source</a></div>
+      <div class="memory">
+        <details>
+          <summary>heard <span id="historyCount"></span></summary>
+          <ol id="history"></ol>
+        </details>
+        <details>
+          <summary>skipped <span id="blockedCount"></span></summary>
+          <ol id="blocked"></ol>
+        </details>
       </div>
     </section>
-
-    <details>
-      <summary>heard <span id="historyCount"></span></summary>
-      <ol id="history"></ol>
-    </details>
-
-    <details>
-      <summary>skipped <span id="blockedCount"></span></summary>
-      <ol id="blocked"></ol>
-      <div class="smallrow"><button class="danger" id="clearBlockedBtn">clear</button></div>
-    </details>
   </section>
 </main>
+<div class="particles" id="particles" aria-hidden="true"></div>
 <div class="mark">frequencies</div>
 <script>
 
@@ -2408,32 +2479,6 @@ const LIBRARY = [
     "year": 2021
   },
   {
-    "id": "i-can-t-believe-we-got-captured-together-for-breeding-mentions-of",
-    "title": "I can't believe we got captured together for... breeding? mentions of",
-    "tags": [
-      "M4F",
-      "Gentle",
-      "Astrophotography",
-      "SFX",
-      "Tender",
-      "Aliens",
-      "Breeding",
-      "Reluctance",
-      "Perfect match",
-      "Kissing",
-      "Space",
-      "Big Spooky Collab"
-    ],
-    "audience": "M4F",
-    "plays": 75269,
-    "source_url": "https://soundgasm.net/u/Lustful_Crunch/M4F-I-cant-believe-we-got-captured-together-for-breeding-Gentle-Astrophotography-SFX-Tender-mentions-of-Aliens-Breeding-Reluctance-Perfect-match-Kissing-Space-Big-Spooky-Collab",
-    "audio_url": "https://pub-5df3d904f8844d79af1e05eb2c5d83ec.r2.dev/audio/i-can-t-believe-we-got-captured-together-for-breeding-mentions-of.m4a",
-    "position": 78,
-    "date": "2021-11-02",
-    "date_display": "Nov 2, 2021",
-    "year": 2021
-  },
-  {
     "id": "i-ll-beg-for-you-to-say-please",
     "title": "I'll beg for you to say please",
     "tags": [
@@ -2463,7 +2508,7 @@ const LIBRARY = [
   },
   {
     "id": "if-you-keep-moving-like-that-i-ll-cum-inside-of-you-a-little-meta-aftercare",
-    "title": "If you keep moving like that, I'll cum inside of you a little [Meta aftercare}",
+    "title": "If you keep moving like that, I'll cum inside of you a little",
     "tags": [
       "M4F",
       "Gentle",
@@ -2478,7 +2523,8 @@ const LIBRARY = [
       "Kisses",
       "Creampie",
       "Wet sounds",
-      "Jazz music"
+      "Jazz music",
+      "Meta aftercare"
     ],
     "audience": "M4F",
     "plays": 293930,
@@ -3166,25 +3212,6 @@ const LIBRARY = [
     "year": 2021
   },
   {
-    "id": "cosy-sleepover-rambles",
-    "title": "Cosy Sleepover Rambles",
-    "tags": [
-      "MM4A",
-      "Sleep Aid",
-      "Sleeping Sounds",
-      "Cosy",
-      "Tired",
-      "Danish talk",
-      "Relax",
-      "Collab w/ SomewhatImorral"
-    ],
-    "audience": "",
-    "plays": 41539,
-    "source_url": "https://soundgasm.net/u/Lustful_Crunch/MM4A-Cosy-Sleepover-Rambles-Sleep-Aid-Sleeping-Sounds-Cosy-Tired-Danish-talk-Relax-Collab-w-SomewhatImorral",
-    "audio_url": "https://pub-5df3d904f8844d79af1e05eb2c5d83ec.r2.dev/audio/cosy-sleepover-rambles.m4a",
-    "position": 108
-  },
-  {
     "id": "don-t-stop-looking-into-my-eyes-very-one-sentence",
     "title": "Don't stop looking into my eyes very one sentence",
     "tags": [
@@ -3807,38 +3834,9 @@ const FILTERS = [
   }
 ];
 
-const QUESTIONS = [
-  {
-    text: 'how are you feeling?',
-    choices: [
-      { label: 'tender', want: ['soft', 'sweet', 'comfort'] },
-      { label: 'sleepy', want: ['sleepy', 'soft'] },
-      { label: 'needy', want: ['teasing', 'encouragement', 'grinding'] },
-      { label: 'silly', want: ['silly', 'rambly'] }
-    ]
-  },
-  {
-    text: 'how intense?',
-    choices: [
-      { label: 'soft', want: ['soft', 'sleepy', 'aftercare'], avoid: ['risky'] },
-      { label: 'gentle', want: ['soft', 'sweet', 'bfe'] },
-      { label: 'building', want: ['teasing', 'friends', 'kissing'] },
-      { label: 'intense', want: ['risky', 'creampie', 'wet'] }
-    ]
-  },
-  {
-    text: 'the listener is..?',
-    choices: [
-      { label: 'submissive', require: 'mdom', want: ['mdom', 'praise', 'encouragement'] },
-      { label: 'dominant', require: 'msub', want: ['msub'] },
-      { label: 'switch', require: 'switch', want: ['switch'] },
-      { label: 'no preference', require: null }
-    ]
-  }
-];
-
 const $ = (sel) => document.querySelector(sel);
 const player = $('#player');
+const seekBar = $('#seekBar');
 const gate = $('#gate');
 const radio = $('#radio');
 const now = $('#now');
@@ -3860,10 +3858,11 @@ let current = null;
 let failedThisSession = new Set();
 let blocked = new Set(JSON.parse(localStorage.getItem(BLOCKED_KEY) || '[]'));
 let excludedYears = new Set(JSON.parse(localStorage.getItem(YEARS_KEY) || '[]').map(String));
-let questionIndex = 0;
 let changeToken = 0;
 let roleRequirement = null;
 let contentPreference = 'nsfw';
+let activeBucket = null;
+let landingWeighted = false;
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function cleanDisplayTitle(title) {
@@ -3909,51 +3908,75 @@ function saveBlocked() { localStorage.setItem(BLOCKED_KEY, JSON.stringify([...bl
 function saveYears() { localStorage.setItem(YEARS_KEY, JSON.stringify([...excludedYears])); }
 function yearMatches(item) { return !item.year || !excludedYears.has(String(item.year)); }
 
-function addFilters(choice) {
-  if (Object.prototype.hasOwnProperty.call(choice, 'content')) contentPreference = choice.content;
-  if (Object.prototype.hasOwnProperty.call(choice, 'require')) roleRequirement = choice.require;
-  for (const id of choice.want || []) { wantFilters.add(id); avoidFilters.delete(id); }
-  for (const id of choice.avoid || []) { avoidFilters.add(id); wantFilters.delete(id); }
+const AUDIO_BUCKETS = [
+  ['tender', [['comfort', 2], ['aftercare', 2], ['cuddle', 2], ['soft', 1], ['gentle', 1], ['sweet', 1], ['cosy', 2], ['reassur', 2], ['sleepy', 3]]],
+  ['romantic', [['bfe', 3], ['domestic', 3], ['friends to lover', 3], ['kissing', 1], ['kisses', 1], ['sweetheart', 2], ['romantic', 3], ['affection', 2]]],
+  ['teasing', [['teasing', 3], ['tease', 3], ['denial', 3], ['edging', 3], ['reluctance', 2]]],
+  ['mdom', [['mdom', 3], ['good girl', 2], ['possessive', 3], ['manhandling', 3], ['guiding', 2], ['pinning', 3], ['you’re mine', 2], ["you're mine", 2]]],
+  ['msub', [['msub', 4], ['whimper', 3], ['whine', 3], ['begging', 3], ['good boy', 3], ['needy', 2], ['please', 1]]],
+  ['oral', [['cunnilingus', 4], ['blowjob', 4], ['oral', 3], ['facesitting', 4], ['face sitting', 4]]],
+  ['grinding', [['grinding', 4], ['outercourse', 4], ['riding', 3], ['thigh', 3]]],
+  ['breeding', [['creampie', 3], ['breeding', 4], ['unprotected', 3], ['cum inside', 4]]],
+  ['playful', [['silly', 4], ['laugh', 2], ['catboy', 4], ['ramble', 4], ['playful', 3], ['purr', 3], ['meow', 3]]],
+  ['whispered', [['whisper', 4], ['binaural', 4], ['soft spoken', 4]]],
+  ['multilingual', [['danish', 4], ['spanish', 4], ['bilingual', 4], ['trilingual', 4]]],
+  ['risky', [['public', 4], ['semi-public', 4], ['interrupted', 3], ['bad idea', 4]]]
+];
+
+function bucketFor(item) {
+  const tags = itemTags(item);
+  let bestBucket = AUDIO_BUCKETS[0][0];
+  let bestScore = -1;
+  for (const [bucket, signals] of AUDIO_BUCKETS) {
+    const score = signals.reduce((sum, [term, weight]) => {
+      return sum + tags.filter(tag => tag.includes(normalize(term))).length * weight;
+    }, 0);
+    if (score > bestScore) {
+      bestBucket = bucket;
+      bestScore = score;
+    }
+  }
+  return bestBucket;
 }
 
-let questionTransitioning = false;
+const BUCKET_BY_ID = new Map(LIBRARY.map(item => [item.id, bucketFor(item)]));
+const FIXED_QUICK_BUCKETS = ['mdom', 'msub'];
+const RANDOM_QUICK_BUCKETS = AUDIO_BUCKETS
+  .map(([label]) => label)
+  .filter(label => !FIXED_QUICK_BUCKETS.includes(label))
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 6);
+const QUICK_BUCKETS = [...FIXED_QUICK_BUCKETS, ...RANDOM_QUICK_BUCKETS];
 
-function updateQuestionContent() {
-  gate.classList.toggle('started', questionIndex > 0);
-  const q = QUESTIONS[questionIndex];
-  $('#question').textContent = q.text;
-  const answers = $('#answers');
-  answers.innerHTML = '';
-  for (const choice of q.choices) {
+function renderQuickChips() {
+  const wrap = $('#quickChips');
+  wrap.innerHTML = '';
+  for (const label of QUICK_BUCKETS) {
     const btn = document.createElement('button');
-    btn.className = 'answer';
-    btn.textContent = choice.label;
+    btn.type = 'button';
+    btn.className = 'quickChip';
+    btn.textContent = label;
     btn.addEventListener('click', () => {
-      if (questionTransitioning) return;
-      questionTransitioning = true;
-      addFilters(choice);
-      if (questionIndex < QUESTIONS.length - 1) {
-        questionIndex += 1;
-        renderQuestion({ animate: true });
-      } else {
-        openRadio();
-      }
-      window.setTimeout(() => { questionTransitioning = false; }, 540);
+      activeBucket = label;
+      landingWeighted = true;
+      releaseWord(label, btn);
+      openRadio();
     });
-    answers.appendChild(btn);
+    wrap.appendChild(btn);
   }
 }
 
-function renderQuestion({ animate = false } = {}) {
-  if (!animate) {
-    updateQuestionContent();
-    return;
-  }
-  gate.classList.add('swapping');
-  window.setTimeout(() => {
-    updateQuestionContent();
-    requestAnimationFrame(() => gate.classList.remove('swapping'));
-  }, 230);
+function releaseWord(word, source) {
+    const rect = source.getBoundingClientRect();
+    const particle = document.createElement('span');
+    particle.className = 'particle';
+    particle.textContent = word;
+    particle.style.left = `${rect.left + rect.width / 2}px`;
+    particle.style.top = `${rect.top + rect.height / 2}px`;
+    particle.style.setProperty('--drift-x', '0px');
+    particle.style.setProperty('--drift-y', '-92px');
+    $('#particles').appendChild(particle);
+    particle.addEventListener('animationend', () => particle.remove());
 }
 
 let lastChoiceWasReplay = false;
@@ -3966,6 +3989,7 @@ function baseCandidates({ignoreHistory=false} = {}) {
   let pool = LIBRARY.filter(item => !blocked.has(item.id) && !failedThisSession.has(item.id));
   pool = pool.filter(item => contentMatches(item));
   pool = pool.filter(item => yearMatches(item));
+  if (activeBucket) pool = pool.filter(item => BUCKET_BY_ID.get(item.id) === activeBucket);
   if (roleRequirement) pool = pool.filter(item => hardRoleMatches(item, roleRequirement));
   if (avoidFilters.size) pool = pool.filter(item => !avoided(item));
   if (!ignoreHistory) {
@@ -3994,6 +4018,19 @@ function chooseNext() {
   }
 
   if (!pool.length) return null;
+  if (landingWeighted) {
+    const weighted = pool.map(item => {
+      const popularity = Math.sqrt(Math.max(1, Number(item.plays) || 1));
+      return [item, popularity * (1 + wantCount(item) * 1.5)];
+    });
+    const total = weighted.reduce((sum, [, weight]) => sum + weight, 0);
+    let roll = Math.random() * total;
+    for (const [item, weight] of weighted) {
+      roll -= weight;
+      if (roll <= 0) return item;
+    }
+    return weighted[weighted.length - 1][0];
+  }
   const ranked = pool.map(item => [item, score(item)]).sort((a,b) => b[1] - a[1]);
   return ranked[0][0];
 }
@@ -4004,6 +4041,24 @@ function showNext(showOptions = {}) {
 }
 
 function formatNumber(n) { return Number(n || 0).toLocaleString(); }
+function formatClock(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const whole = Math.floor(seconds);
+  const hours = Math.floor(whole / 3600);
+  const minutes = Math.floor((whole % 3600) / 60);
+  const secs = String(whole % 60).padStart(2, '0');
+  return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${secs}` : `${minutes}:${secs}`;
+}
+function syncTimeline() {
+  const duration = Number.isFinite(player.duration) ? player.duration : 0;
+  const elapsed = Number.isFinite(player.currentTime) ? player.currentTime : 0;
+  const progress = duration ? Math.min(100, (elapsed / duration) * 100) : 0;
+  seekBar.value = String(progress);
+  seekBar.style.setProperty('--progress', `${progress}%`);
+  seekBar.setAttribute('aria-valuetext', `${formatClock(elapsed)} of ${formatClock(duration)}`);
+  $('#elapsedTime').textContent = formatClock(elapsed);
+  $('#durationTime').textContent = formatClock(duration);
+}
 function formatMeta(item) {
   const bits = [];
   if (item.plays) bits.push(`${formatNumber(item.plays)} plays`);
@@ -4021,21 +4076,28 @@ async function showItem(item, {autoplay=false, remember=false, replayed=false} =
   const token = ++changeToken;
   now.classList.add('changing');
   setStatus('');
-  await sleep(230);
-  if (token !== changeToken) return;
 
   queued = item;
   if (autoplay) current = item;
+  sourceLink.href = item.source_url || '#';
+  sourceLink.hidden = !item.source_url;
+  if (!player.src || !player.src.includes(item.audio_url)) {
+    player.src = item.audio_url;
+    syncTimeline();
+  }
+  if (remember) addHistory(item);
+  renderMemory();
+
+  if (autoplay) {
+    player.play().catch(() => setStatus('tap play'));
+  }
+
+  await sleep(230);
+  if (token !== changeToken) return;
+
   nowTitle.textContent = item.title;
   nowMeta.textContent = formatMeta(item);
   nowTags.innerHTML = formatTags(item);
-  sourceLink.href = item.source_url || '#';
-  sourceLink.hidden = !item.source_url;
-  player.src = item.audio_url;
-  $('#playBtn').textContent = autoplay ? 'play' : 'play';
-
-  if (remember) addHistory(item);
-  renderMemory();
 
   await sleep(50);
   if (token !== changeToken) return;
@@ -4043,11 +4105,6 @@ async function showItem(item, {autoplay=false, remember=false, replayed=false} =
 
   if (replayed) {
     setStatus('you’ve heard everything available — replaying something from before');
-  }
-
-  if (autoplay) {
-    try { await player.play(); }
-    catch (err) { setStatus('tap play'); }
   }
 }
 
@@ -4061,16 +4118,10 @@ function setStatus(msg='') { statusEl.textContent = msg; }
 function activeItem() { return current || queued; }
 
 function openRadio() {
-  questionTransitioning = true;
-  gate.classList.add('swapping');
-  window.setTimeout(() => {
-    gate.classList.add('gone');
-    gate.classList.remove('swapping');
-    radio.classList.add('on');
-    renderChips();
-    showNext({autoplay:false, remember:false});
-    window.setTimeout(() => { questionTransitioning = false; }, 260);
-  }, 280);
+  gate.classList.add('gone');
+  radio.classList.add('on');
+  renderChips();
+  showNext({autoplay:true, remember:true});
 }
 
 function renderYearChips() {
@@ -4110,19 +4161,40 @@ function renderFilterButtons(containerId, mode) {
     const btn = document.createElement('button');
     btn.className = `chip ${mode}${isOn ? ' on' : ''}`;
     btn.textContent = filter.label;
-    btn.title = filter.terms.join(', ');
+    btn.title = [...(filter.terms || []), ...(filter.exactTags || [])].join(', ');
     btn.addEventListener('click', () => {
       const target = mode === 'want' ? wantFilters : avoidFilters;
       const other = mode === 'want' ? avoidFilters : wantFilters;
       if (target.has(filter.id)) target.delete(filter.id);
       else { target.add(filter.id); other.delete(filter.id); }
       renderChips();
+    });
+    wrap.appendChild(btn);
+  }
+}
+function renderRoleChips() {
+  const wrap = $('#roleChips');
+  wrap.innerHTML = '';
+  const roles = [
+    ['submissive', 'mdom'],
+    ['dominant', 'msub'],
+    ['either', 'switch'],
+    ['no preference', null]
+  ];
+  for (const [label, value] of roles) {
+    const btn = document.createElement('button');
+    btn.className = `chip want${roleRequirement === value ? ' on' : ''}`;
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      roleRequirement = value;
+      renderRoleChips();
       if (!current || player.paused) showNext({autoplay:false, remember:false});
     });
     wrap.appendChild(btn);
   }
 }
 function renderChips() {
+  renderRoleChips();
   renderYearChips();
   renderFilterButtons('#wantChips', 'want');
   renderFilterButtons('#avoidChips', 'avoid');
@@ -4184,6 +4256,10 @@ function blockItem(id) {
 }
 
 $('#playBtn').addEventListener('click', async () => {
+  if (!player.paused) {
+    player.pause();
+    return;
+  }
   let replayed = false;
   const item = queued || (() => {
     const picked = chooseNext();
@@ -4205,9 +4281,35 @@ $('#playBtn').addEventListener('click', async () => {
 });
 $('#nextBtn').addEventListener('click', () => showNext({autoplay:true, remember:true}));
 $('#neverBtn').addEventListener('click', () => { const item = activeItem(); if (item) blockItem(item.id); });
-$('#clearBlockedBtn').addEventListener('click', () => { blocked.clear(); saveBlocked(); renderMemory(); });
 
-player.addEventListener('play', () => { if (queued) current = queued; });
+$('#fineTuneBtn').addEventListener('click', () => {
+  const panel = $('#advanced');
+  const opening = panel.hidden;
+  panel.hidden = !opening;
+  $('#fineTuneBtn').setAttribute('aria-expanded', String(opening));
+});
+
+$('#surpriseBtn').addEventListener('click', () => {
+  activeBucket = null;
+  landingWeighted = true;
+  openRadio();
+});
+
+player.addEventListener('play', () => {
+  if (queued) current = queued;
+  $('#playBtn').textContent = 'pause';
+  setStatus('');
+});
+player.addEventListener('pause', () => { $('#playBtn').textContent = 'play'; });
+player.addEventListener('timeupdate', syncTimeline);
+player.addEventListener('loadedmetadata', syncTimeline);
+player.addEventListener('durationchange', syncTimeline);
+player.addEventListener('emptied', syncTimeline);
+seekBar.addEventListener('input', () => {
+  if (!Number.isFinite(player.duration) || player.duration <= 0) return;
+  player.currentTime = (Number(seekBar.value) / 100) * player.duration;
+  syncTimeline();
+});
 player.addEventListener('ended', () => showNext({autoplay:true, remember:true}));
 player.addEventListener('error', () => {
   const item = activeItem();
@@ -4215,7 +4317,7 @@ player.addEventListener('error', () => {
   setStatus('missing');
 });
 
-renderQuestion();
+renderQuickChips();
 renderMemory();
 
 </script>
