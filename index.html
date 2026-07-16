@@ -3933,6 +3933,8 @@ const blockedEl = $('#blocked');
 const BLOCKED_KEY = 'frequencies.blocked.v1';
 const YEARS_KEY = 'frequencies.excludedYears.v1';
 const AGE_KEY = 'frequencies.ageConfirmed.v1';
+const RESUME_KEY = 'frequencies.resume.v1';
+const RESUME_TTL = 24 * 60 * 60 * 1000;
 let wantFilters = new Set();
 let avoidFilters = new Set();
 let history = [];
@@ -3947,7 +3949,42 @@ let contentPreference = 'nsfw';
 let activeBucket = null;
 let landingWeighted = false;
 let fineTuned = false;
+let lastResumeSave = 0;
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function saveResumeState({force=false} = {}) {
+  const item = activeItem();
+  if (!item) return;
+  const timestamp = Date.now();
+  if (!force && timestamp - lastResumeSave < 3000) return;
+  lastResumeSave = timestamp;
+  localStorage.setItem(RESUME_KEY, JSON.stringify({
+    savedAt: timestamp,
+    currentId: item.id,
+    currentTime: Number.isFinite(player.currentTime) ? player.currentTime : 0,
+    history,
+    wantFilters: [...wantFilters],
+    avoidFilters: [...avoidFilters],
+    roleRequirement,
+    activeBucket,
+    landingWeighted,
+    fineTuned
+  }));
+}
+
+function readResumeState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(RESUME_KEY) || 'null');
+    if (!saved || !saved.savedAt || Date.now() - saved.savedAt > RESUME_TTL) {
+      localStorage.removeItem(RESUME_KEY);
+      return null;
+    }
+    return saved;
+  } catch (_) {
+    localStorage.removeItem(RESUME_KEY);
+    return null;
+  }
+}
 
 function enterSite({persist=false, animate=true} = {}) {
   if (persist) localStorage.setItem(AGE_KEY, 'true');
@@ -4272,7 +4309,7 @@ function formatTags(item) {
   return `<span class="tagIntro">tags:</span> ${tags.join(' · ')}`;
 }
 
-async function showItem(item, {autoplay=false, remember=false, replayed=false} = {}) {
+async function showItem(item, {autoplay=false, remember=false, replayed=false, persist=true} = {}) {
   if (!item) { setStatus(fineTuned ? 'nothing' : 'nothing new left'); return; }
   const token = ++changeToken;
   now.classList.add('changing');
@@ -4288,6 +4325,7 @@ async function showItem(item, {autoplay=false, remember=false, replayed=false} =
   }
   if (remember) addHistory(item);
   renderMemory();
+  if (persist) saveResumeState({force:true});
 
   if (autoplay) {
     player.play().catch(() => setStatus('tap play'));
@@ -4508,6 +4546,7 @@ player.addEventListener('play', () => {
 });
 player.addEventListener('pause', () => { $('#playBtn').textContent = 'play'; });
 player.addEventListener('timeupdate', syncTimeline);
+player.addEventListener('timeupdate', () => saveResumeState());
 player.addEventListener('loadedmetadata', syncTimeline);
 player.addEventListener('durationchange', syncTimeline);
 player.addEventListener('emptied', syncTimeline);
@@ -4523,8 +4562,47 @@ player.addEventListener('error', () => {
   setStatus('missing');
 });
 
+function restoreResumeState() {
+  const saved = readResumeState();
+  if (!saved) return false;
+  const item = LIBRARY.find(entry => entry.id === saved.currentId);
+  if (!item) {
+    localStorage.removeItem(RESUME_KEY);
+    return false;
+  }
+
+  const validFilterIds = new Set(FILTERS.map(filter => filter.id));
+  wantFilters = new Set((saved.wantFilters || []).filter(id => validFilterIds.has(id)));
+  avoidFilters = new Set((saved.avoidFilters || []).filter(id => validFilterIds.has(id)));
+  roleRequirement = ['mdom', 'msub', 'switch'].includes(saved.roleRequirement) ? saved.roleRequirement : null;
+  activeBucket = AUDIO_BUCKETS.some(([label]) => label === saved.activeBucket) ? saved.activeBucket : null;
+  landingWeighted = Boolean(saved.landingWeighted);
+  fineTuned = Boolean(saved.fineTuned);
+  history = (saved.history || []).filter(entry => LIBRARY.some(item => item.id === entry.id));
+  current = item;
+  queued = item;
+
+  gate.classList.add('gone');
+  radio.classList.add('on');
+  renderChips();
+  renderMemory();
+  showItem(item, {autoplay:false, remember:false, persist:false});
+
+  const resumeAt = Math.max(0, Number(saved.currentTime) || 0);
+  const applySavedTime = () => {
+    if (Number.isFinite(player.duration)) player.currentTime = Math.min(resumeAt, player.duration);
+    syncTimeline();
+  };
+  if (player.readyState >= 1) applySavedTime();
+  else player.addEventListener('loadedmetadata', applySavedTime, {once:true});
+  return true;
+}
+
+document.addEventListener('click', () => window.setTimeout(() => saveResumeState({force:true}), 0));
+window.addEventListener('pagehide', () => saveResumeState({force:true}));
+
 renderQuickChips();
-renderMemory();
+if (!restoreResumeState()) renderMemory();
 
 </script>
 </body>
