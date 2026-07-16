@@ -3947,6 +3947,9 @@ function itemRole(item) {
   if (hasMdom) return 'mdom';
   return null;
 }
+function hasRoleTag(item, role) {
+  return new RegExp(`\\b${role}\\b`, 'i').test(itemTags(item).join(' | '));
+}
 function hardRoleMatches(item, role) {
   if (!role) return true;
   return itemRole(item) === role;
@@ -4021,7 +4024,7 @@ function renderQuickChips() {
     btn.className = 'quickChip';
     btn.textContent = label;
     btn.addEventListener('click', () => {
-      activeBucket = label;
+      activeBucket = label === 'mdom' || label === 'msub' ? null : label;
       roleRequirement = label === 'mdom' || label === 'msub' ? label : null;
       landingWeighted = true;
       releaseWord(label, btn);
@@ -4073,8 +4076,29 @@ function preferredRole() {
 function prioritizeRole(pool) {
   const role = preferredRole();
   if (!role) return pool;
+  if (role === 'msub') {
+    const nonMdom = pool.filter(item => !hasRoleTag(item, 'mdom'));
+    const explicitMsub = nonMdom.filter(item => itemRole(item) === 'msub');
+    return explicitMsub.length ? explicitMsub : (nonMdom.length ? nonMdom : pool);
+  }
   const matching = pool.filter(item => hardRoleMatches(item, role));
   return matching.length ? matching : pool;
+}
+
+function roleAffinityWeight(item, role) {
+  if (!role) return 1;
+  const tags = itemTags(item);
+  const signals = role === 'msub' ? [
+    ['msub', 8], ['good boy', 5], ['all yours', 4], ['whimper', 3], ['whine', 3],
+    ['begging', 3], ['pleading', 3], ['nervous', 2], ['shy', 2], ['please', 1]
+  ] : role === 'mdom' ? [
+    ['mdom', 8], ['gentle mdom', 5], ['good girl', 4], ['possessive', 3],
+    ['manhandling', 3], ['pinning', 3], ['guiding', 2], ['call me sir', 3]
+  ] : [['switch', 8], ['switchy', 8]];
+  const score = signals.reduce((sum, [term, weight]) => {
+    return sum + (tags.some(tag => tag.includes(term)) ? weight : 0);
+  }, 0);
+  return 1 + score * 1.5;
 }
 
 function score(item) {
@@ -4123,7 +4147,8 @@ function chooseNext() {
   if (!fineTuned && history.length) {
     const previous = activeItem();
     const pool = prioritizeRole(naturalNextCandidates());
-    return weightedPick(pool.map(item => [item, continuityWeight(item, previous)]));
+    const role = preferredRole();
+    return weightedPick(pool.map(item => [item, continuityWeight(item, previous) * roleAffinityWeight(item, role)]));
   }
 
   let pool = baseCandidates();
@@ -4137,9 +4162,10 @@ function chooseNext() {
 
   if (!pool.length) return null;
   if (landingWeighted) {
+    const role = preferredRole();
     const weighted = pool.map(item => {
       const popularity = Math.sqrt(Math.max(1, Number(item.plays) || 1));
-      return [item, popularity * (1 + wantCount(item) * 1.5)];
+      return [item, popularity * (1 + wantCount(item) * 1.5) * roleAffinityWeight(item, role)];
     });
     return weightedPick(weighted);
   }
