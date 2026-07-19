@@ -4019,6 +4019,7 @@ const RESUME_TTL = 24 * 60 * 60 * 1000;
 let wantFilters = new Set();
 let avoidFilters = new Set();
 let history = [];
+let cycleStartedAt = 0;
 let queued = null;
 let current = null;
 let failedThisSession = new Set();
@@ -4028,6 +4029,7 @@ let changeToken = 0;
 let roleRequirement = null;
 let contentPreference = 'nsfw';
 let activeBucket = null;
+let landingTerm = null;
 let landingWeighted = false;
 let fineTuned = false;
 let lastResumeSave = 0;
@@ -4045,10 +4047,12 @@ function saveResumeState({force=false} = {}) {
     currentId: item.id,
     currentTime: Number.isFinite(player.currentTime) ? player.currentTime : 0,
     history,
+    cycleStartedAt,
     wantFilters: [...wantFilters],
     avoidFilters: [...avoidFilters],
     roleRequirement,
     activeBucket,
+    landingTerm,
     landingWeighted,
     fineTuned,
     view: radio.classList.contains('on') ? 'radio' : 'landing',
@@ -4185,26 +4189,46 @@ function bucketFor(item) {
 
 const BUCKET_BY_ID = new Map(LIBRARY.map(item => [item.id, bucketFor(item)]));
 const FIXED_QUICK_BUCKETS = ['mdom', 'msub'];
+const QUICK_LABEL_BY_BUCKET = {
+  tender: 'comfort',
+  romantic: 'romantic',
+  teasing: 'teasing',
+  mdom: 'mdom',
+  msub: 'msub',
+  oral: 'oral',
+  grinding: 'grinding',
+  breeding: 'breeding',
+  ramblefap: 'ramblefap',
+  playful: 'silly',
+  whispered: 'whispers',
+  multilingual: 'danish',
+  risky: 'risky'
+};
+const LANDING_MATCH_TERMS = {
+  risky: ['risky', 'public']
+};
 const RANDOM_QUICK_BUCKETS = AUDIO_BUCKETS
   .map(([label]) => label)
   .filter(label => !FIXED_QUICK_BUCKETS.includes(label))
   .sort(() => Math.random() - 0.5)
   .slice(0, 6);
-const QUICK_BUCKETS = [...FIXED_QUICK_BUCKETS, ...RANDOM_QUICK_BUCKETS];
+const QUICK_BUCKETS = [...FIXED_QUICK_BUCKETS, ...RANDOM_QUICK_BUCKETS]
+  .map(bucket => ({bucket, label: QUICK_LABEL_BY_BUCKET[bucket]}));
 
 function renderQuickChips() {
   const wrap = $('#quickChips');
   wrap.innerHTML = '';
-  for (const label of QUICK_BUCKETS) {
+  for (const option of QUICK_BUCKETS) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'quickChip';
-    btn.textContent = label;
+    btn.textContent = option.label;
     btn.addEventListener('click', () => {
-      activeBucket = label === 'mdom' || label === 'msub' ? null : label;
-      roleRequirement = label === 'mdom' || label === 'msub' ? label : null;
+      activeBucket = null;
+      landingTerm = option.label;
+      roleRequirement = option.bucket === 'mdom' || option.bucket === 'msub' ? option.bucket : null;
       landingWeighted = true;
-      releaseWord(label, btn);
+      releaseWord(option.label, btn);
       openRadio();
     });
     wrap.appendChild(btn);
@@ -4230,14 +4254,26 @@ function heardIds() {
   return new Set(history.map(h => h.id));
 }
 
-function baseCandidates({ignoreHistory=false, ignoreBucket=false} = {}) {
+function cycleHeardIds() {
+  return new Set(history.slice(cycleStartedAt).map(h => h.id));
+}
+
+function landingTermMatches(item) {
+  if (!landingTerm) return true;
+  const text = normalize([item.title, ...(item.tags || [])].join(' '));
+  const terms = LANDING_MATCH_TERMS[landingTerm] || [landingTerm];
+  return terms.some(term => text.includes(normalize(term)));
+}
+
+function baseCandidates({ignoreHistory=false, ignoreBucket=false, ignoreLandingTerm=false} = {}) {
   let pool = LIBRARY.filter(item => !blocked.has(item.id) && !failedThisSession.has(item.id));
   pool = pool.filter(item => contentMatches(item));
   pool = pool.filter(item => yearMatches(item));
+  if (!ignoreLandingTerm) pool = pool.filter(item => landingTermMatches(item));
   if (activeBucket && !ignoreBucket) pool = pool.filter(item => BUCKET_BY_ID.get(item.id) === activeBucket);
   if (avoidFilters.size) pool = pool.filter(item => !avoided(item));
   if (!ignoreHistory) {
-    const played = heardIds();
+    const played = cycleHeardIds();
     pool = pool.filter(item => !played.has(item.id));
   }
   return pool;
@@ -4310,14 +4346,17 @@ function selectionBaseWeight(item) {
   return (280 + Math.log10(plays + 10) * 18) * yearBoost;
 }
 
-function naturalNextCandidates() {
-  const played = heardIds();
+function naturalNextCandidates({ignoreLandingTerm=false, allowActive=false} = {}) {
+  const played = cycleHeardIds();
+  const active = activeItem();
   return LIBRARY.filter(item => {
     return !played.has(item.id)
+      && (allowActive || !active || item.id !== active.id)
       && !blocked.has(item.id)
       && !failedThisSession.has(item.id)
       && contentMatches(item)
-      && yearMatches(item);
+      && yearMatches(item)
+      && (ignoreLandingTerm || landingTermMatches(item));
   });
 }
 
@@ -4336,7 +4375,18 @@ function chooseNext() {
 
   if (!fineTuned && history.length) {
     const previous = activeItem();
-    const pool = prioritizeRole(naturalNextCandidates());
+    let pool = prioritizeRole(naturalNextCandidates());
+    if (!pool.length && landingTerm) {
+      pool = prioritizeRole(naturalNextCandidates({ignoreLandingTerm:true}));
+    }
+    if (!pool.length) {
+      cycleStartedAt = history.length;
+      lastChoiceWasReplay = true;
+      pool = prioritizeRole(naturalNextCandidates({allowActive:true}));
+      if (!pool.length && landingTerm) {
+        pool = prioritizeRole(naturalNextCandidates({ignoreLandingTerm:true, allowActive:true}));
+      }
+    }
     const role = preferredRole();
     return weightedPick(pool.map(item => [item, continuityWeight(item, previous) * roleAffinityWeight(item, role)]));
   }
@@ -4344,21 +4394,30 @@ function chooseNext() {
   let pool = baseCandidates();
   pool = prioritizeRole(pool);
 
+  if (!pool.length && landingTerm) {
+    pool = baseCandidates({ignoreLandingTerm:true});
+    pool = prioritizeRole(pool);
+  }
+
   if (!pool.length && activeBucket) {
     pool = baseCandidates({ignoreBucket:true});
     pool = prioritizeRole(pool);
   }
 
   if (!pool.length) {
-    pool = baseCandidates({ignoreHistory:true});
+    cycleStartedAt = history.length;
+    lastChoiceWasReplay = true;
+    pool = baseCandidates();
     pool = prioritizeRole(pool);
-    if (pool.length) lastChoiceWasReplay = true;
+    if (!pool.length && landingTerm) {
+      pool = baseCandidates({ignoreLandingTerm:true});
+      pool = prioritizeRole(pool);
+    }
   }
 
   if (!pool.length && activeBucket) {
-    pool = baseCandidates({ignoreHistory:true, ignoreBucket:true});
+    pool = baseCandidates({ignoreBucket:true});
     pool = prioritizeRole(pool);
-    if (pool.length) lastChoiceWasReplay = true;
   }
 
   if (!pool.length) return null;
@@ -4527,6 +4586,7 @@ function renderRoleChips() {
     btn.textContent = label;
     btn.addEventListener('click', () => {
       roleRequirement = value;
+      if (landingTerm === 'mdom' || landingTerm === 'msub') landingTerm = null;
       fineTuned = true;
       activeBucket = null;
       renderRoleChips();
@@ -4761,6 +4821,7 @@ $('#exploreBtn').addEventListener('click', () => {
 
 $('#surpriseBtn').addEventListener('click', () => {
   activeBucket = null;
+  landingTerm = null;
   landingWeighted = true;
   openRadio();
 });
@@ -4796,9 +4857,11 @@ function restoreResumeState() {
   avoidFilters = new Set((saved.avoidFilters || []).filter(id => validFilterIds.has(id)));
   roleRequirement = ['mdom', 'msub', 'switch'].includes(saved.roleRequirement) ? saved.roleRequirement : null;
   activeBucket = AUDIO_BUCKETS.some(([label]) => label === saved.activeBucket) ? saved.activeBucket : null;
+  landingTerm = typeof saved.landingTerm === 'string' ? saved.landingTerm : null;
   landingWeighted = Boolean(saved.landingWeighted);
   fineTuned = Boolean(saved.fineTuned);
   history = (saved.history || []).filter(entry => LIBRARY.some(item => item.id === entry.id));
+  cycleStartedAt = Math.min(history.length, Math.max(0, Number(saved.cycleStartedAt) || 0));
 
   if (saved.view === 'landing') {
     current = null;
